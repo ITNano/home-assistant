@@ -77,6 +77,7 @@ TEST_REQUIREMENTS = (
     'pynx584',
     'pyqwikswitch',
     'python-forecastio',
+    'python-nest',
     'pyunifi',
     'pyupnp-async',
     'pywebpush',

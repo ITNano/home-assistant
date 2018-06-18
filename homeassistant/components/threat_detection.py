@@ -7,4 +7,5 @@ For more information on this component see \todo add where to find documontation
 COMPONENT = 'threat_detection'
 
 def setup(hass, config):
+    """Set up the threat_detection component."""
     return True

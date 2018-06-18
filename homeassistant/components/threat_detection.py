@@ -8,10 +8,10 @@ import logging
 
 DOMAIN = 'threat_detection'
 
-def setup(hass, config=None):
+@asyncio.coroutine
+def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     log = logging.getLogger(__name__)
     log.info("""This is a test to se if the threat_detection component can write to the logs""")
 
-    hass.
     return True

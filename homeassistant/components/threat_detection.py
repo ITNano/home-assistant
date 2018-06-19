@@ -16,8 +16,6 @@ DOMAIN = 'threat_detection'
 ENTITIY_ID_FORMAT = DOMAIN + '.[]'
 DEPENDENCIES = []
 
-ATTR_
-
 CONF_TEXT = 'text'
 DEFAULT_TEXT = 'No text!'
 
@@ -25,11 +23,13 @@ DEFAULT_TEXT = 'No text!'
 def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     #This seems to be a thing. I don't know what it does. May have to do with getting things to and from dependent
-    #platforms? 
-    component = EntityComponent(_LOGGER, DOMAIN, hass)
+    #platforms?
+    #component = EntityComponent(_LOGGER, DOMAIN, hass)
     yield from component.async_setup(config)
+
+
     text = 'test'
-   # hass.states.set('threat_detection.Hello_World', text)
+    hass.states.set('threat_detection.Threat_Detection', text)
 
     _LOGGER.info("The threat_detection component is running!")
 

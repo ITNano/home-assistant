@@ -21,7 +21,7 @@ DEFAULT_TEXT = 'No text!'
 def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     text = "test"
-    hass.states.set('threat_detection', text)
+    #hass.states.set('threat_detection', text)
 
     _LOGGER.info("The threat_detection component is running!")
 

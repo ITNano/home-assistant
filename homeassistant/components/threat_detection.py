@@ -12,7 +12,7 @@ from homeassistant.helpers.entity_component import EntityComponent
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'threat_detection'
+DOMAIN = 'ids'
 ENTITIY_ID_FORMAT = DOMAIN + '.[]'
 DEPENDENCIES = []
 
@@ -27,9 +27,7 @@ def async_setup(hass, config=None):
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     yield from component.async_setup(config)
 
-
-    text = 'test'
-    #hass.states.set('threat_detection.Threat_Detection', text)
+    hass.states.set('ids.detections', 0)
 
     _LOGGER.info("The threat_detection component is running!")
 

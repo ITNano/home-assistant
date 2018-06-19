@@ -17,6 +17,8 @@ DEPENDENCIES = []
 CONF_TEXT = 'text'
 DEFAULT_TEXT = 'No text!'
 
+ATTR_TEST = 'test'
+
 #CONFIG_SCHEMA = vol.Schema({
 #    DOMAIN: vol.Schema({
 #        vol.Required(CONF_TEXT):cv.string,
@@ -27,13 +29,17 @@ DEFAULT_TEXT = 'No text!'
 def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     text = config[DOMAIN].get(CONF_TEXT, DEFAULT_TEXT)
-    hass.states.set('threat_detection.Threat_State', text)
+    hass.states.set('threat_detection.test', text)
 
     _LOGGER.info("The threat_detection component is running!")
 
     return True
 
 @property
-def device_state_attributes(self):
+def state_attributes(self):
     """Return device specific state attributes."""
-    return self._attributes
+    data = {}
+    data[ATTR_TEST] = 'test'
+
+    return data
+

@@ -27,7 +27,6 @@ def async_setup(hass, config=None):
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     yield from component.async_setup(config)
 
-    hass.states.set('ids.detections', 0)
 
     _LOGGER.info("The threat_detection component is running!")
 

@@ -28,8 +28,8 @@ ATTR_TEST = 'threat_detection'
 @asyncio.coroutine
 def async_setup(hass, config=None):
     """Set up the threat_detection component."""
-    text = config[DOMAIN].get(CONF_TEXT, DEFAULT_TEXT)
-    hass.states.set('threat_detection.test', text)
+    text = "test"
+    hass.states.set('threat_detection', text)
 
     _LOGGER.info("The threat_detection component is running!")
 

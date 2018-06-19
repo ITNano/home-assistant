@@ -17,7 +17,7 @@ DEPENDENCIES = []
 CONF_TEXT = 'text'
 DEFAULT_TEXT = 'No text!'
 
-ATTR_TEST = 'test'
+ATTR_TEST = 'threat_detection'
 
 #CONFIG_SCHEMA = vol.Schema({
 #    DOMAIN: vol.Schema({

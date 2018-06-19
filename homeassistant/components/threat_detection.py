@@ -12,7 +12,7 @@ from homeassistant.helpers.entity_component import EntityComponent
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'ids'
+DOMAIN = 'threat_detection'
 ENTITIY_ID_FORMAT = DOMAIN + '.[]'
 DEPENDENCIES = []
 
@@ -34,7 +34,7 @@ DEFAULT_TEXT = 'No text!'
 #     return True
 
 def setup(hass, config):
-    hass.states.set('ids.detections', 0)
+    hass.states.set('threat_detection.detections', 0)
     return True
 
 

@@ -17,11 +17,11 @@ DEPENDENCIES = []
 CONF_TEXT = 'text'
 DEFAULT_TEXT = 'No text!'
 
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_TEXT):cv.string,
-    })
-}, extra=vol.ALLOW_EXTRA)
+#CONFIG_SCHEMA = vol.Schema({
+#    DOMAIN: vol.Schema({
+#        vol.Required(CONF_TEXT):cv.string,
+#    })
+#}, extra=vol.ALLOW_EXTRA)
 
 @asyncio.coroutine
 def async_setup(hass, config=None):

@@ -17,14 +17,6 @@ DEPENDENCIES = []
 CONF_TEXT = 'text'
 DEFAULT_TEXT = 'No text!'
 
-ATTR_TEST = 'threat_detection'
-
-#CONFIG_SCHEMA = vol.Schema({
-#    DOMAIN: vol.Schema({
-#        vol.Required(CONF_TEXT):cv.string,
-#    })
-#}, extra=vol.ALLOW_EXTRA)
-
 @asyncio.coroutine
 def async_setup(hass, config=None):
     """Set up the threat_detection component."""
@@ -34,12 +26,4 @@ def async_setup(hass, config=None):
     _LOGGER.info("The threat_detection component is running!")
 
     return True
-
-@property
-def state_attributes(self):
-    """Return device specific state attributes."""
-    data = {}
-    data[ATTR_TEST] = 'test'
-
-    return data
 

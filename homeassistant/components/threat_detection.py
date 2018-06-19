@@ -20,8 +20,8 @@ DEFAULT_TEXT = 'No text!'
 @asyncio.coroutine
 def async_setup(hass, config=None):
     """Set up the threat_detection component."""
-    text = "test"
-    #hass.states.set('threat_detection', text)
+    text = 'test'
+    hass.states.set('threat_detection.Hello_World', text)
 
     _LOGGER.info("The threat_detection component is running!")
 

@@ -24,12 +24,12 @@ def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     #This seems to be a thing. I don't know what it does. May have to do with getting things to and from dependent
     #platforms? It seems to break our stuff.
-    #component = EntityComponent(_LOGGER, DOMAIN, hass)
-    #yield from component.async_setup(config)
+    component = EntityComponent(_LOGGER, DOMAIN, hass)
+    yield from component.async_setup(config)
 
 
     text = 'test'
-    hass.states.set('threat_detection.Threat_Detection', text)
+    #hass.states.set('threat_detection.Threat_Detection', text)
 
     _LOGGER.info("The threat_detection component is running!")
 

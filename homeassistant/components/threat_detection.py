@@ -9,12 +9,17 @@ import logging
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_component import EntityComponent
+from homeassistant.components.group import \
+    ENTITY_ID_FORMAT as GROUP_ENTITY_ID_FORMAT
 
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'threat_detection'
 ENTITIY_ID_FORMAT = DOMAIN + '.[]'
-DEPENDENCIES = []
+DEPENDENCIES = ['group']
+
+GROUP_NAME_ALL_IDS = 'all_ids'
+ENTITY_ID_ALL_IDS = GROUP_ENTITY_ID_FORMAT.format('all_ids')
 
 CONF_TEXT = 'text'
 DEFAULT_TEXT = 'No text!'
@@ -24,7 +29,7 @@ def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     #This seems to be a thing. I don't know what it does. May have to do with getting things to and from dependent
     #platforms? It seems to break our stuff.
-    component = EntityComponent(_LOGGER, DOMAIN, hass)
+    component = EntityComponent(_LOGGER, DOMAIN, hass, GROUP_NAME_ALL_IDS)
     yield from component.async_setup(config)
 
 

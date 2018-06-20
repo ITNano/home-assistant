@@ -9,8 +9,6 @@ import logging
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_component import EntityComponent
-from homeassistant.components.group import \
-    ENTITY_ID_FORMAT as GROUP_ENTITY_ID_FORMAT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,7 +23,7 @@ CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Required(): cv.string,
     })
-}, extra=vol.ALLOW_EXTRA)
+})
 
 #Configuration input
 CONF_INPUT = 'input'

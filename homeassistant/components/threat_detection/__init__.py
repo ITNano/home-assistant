@@ -24,18 +24,18 @@ ENTITY_ID_ALL_IDS = GROUP_ENTITY_ID_FORMAT.format('all_ids')
 CONF_TEXT = 'text'
 DEFAULT_TEXT = 'No text!'
 
-@asyncio.coroutine
-def async_setup(hass, config=None):
-    """Set up the threat_detection component."""
-    #This seems to be a thing. I don't know what it does. May have to do with getting things to and from dependent
-    #platforms? It seems to break our stuff.
-    component = EntityComponent(_LOGGER, DOMAIN, hass, GROUP_NAME_ALL_IDS)
-    yield from component.async_setup(config)
-
-
-    _LOGGER.info("The threat_detection component is set up through the async_setup() method.")
-
-    return True
+# @asyncio.coroutine
+# def async_setup(hass, config=None):
+#     """Set up the threat_detection component."""
+#     #This seems to be a thing. I don't know what it does. May have to do with getting things to and from dependent
+#     #platforms? It seems to break our stuff.
+#     component = EntityComponent(_LOGGER, DOMAIN, hass, GROUP_NAME_ALL_IDS)
+#     yield from component.async_setup(config)
+#
+#
+#     _LOGGER.info("The threat_detection component is set up through the async_setup() method.")
+#
+#     return True
 
 def setup(hass, config):
     hass.states.set('threat_detection.detections', 0)

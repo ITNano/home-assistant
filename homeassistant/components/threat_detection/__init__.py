@@ -32,15 +32,17 @@ def async_setup(hass, config=None):
     component = EntityComponent(_LOGGER, DOMAIN, hass, GROUP_NAME_ALL_IDS)
     yield from component.async_setup(config)
 
+    hass.states.async_set('threat_detection.detections', 0)
+
 
     _LOGGER.info("The threat_detection component is set up through the async_setup() method.")
 
     return True
 
-def setup(hass, config):
-    hass.states.set('threat_detection.detections', 0)
-    _LOGGER.info("The threat detection component is set up through the setup() method.")
-    return True
+#def setup(hass, config):
+#    hass.states.set('threat_detection.detections', 0)
+#    _LOGGER.info("The threat detection component is set up through the setup() method.")
+#    return True
 
 
 

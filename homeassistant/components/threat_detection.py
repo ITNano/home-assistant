@@ -28,12 +28,13 @@ def async_setup(hass, config=None):
     yield from component.async_setup(config)
 
 
-    _LOGGER.info("The threat_detection component is running!")
+    _LOGGER.info("The threat_detection component is set up through the async_setup() method.")
 
     return True
 
 def setup(hass, config):
     hass.states.set('threat_detection.detections', 0)
+    _LOGGER.info("The threat detection component is set up through the setup() method.")
     return True
 
 

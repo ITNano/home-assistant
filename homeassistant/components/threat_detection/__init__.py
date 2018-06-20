@@ -27,7 +27,7 @@ CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Required(CONF_INPUT, DEFAULT_INPUT): cv.string,
     })
-})
+}, extra=vol.ALLOW_EXTRA)
 
 
 

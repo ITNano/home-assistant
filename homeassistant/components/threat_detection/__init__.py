@@ -19,7 +19,7 @@ ENTITIY_ID_FORMAT = DOMAIN + '.[]'
 DEPENDENCIES = []
 
 #Configuration input
-CONF_INPUT = 'input'
+CONF_INPUT = 'userinput'
 DEFAULT_INPUT = "Just default input."
 DEFAULT_DETECTIONS = 0
 #Here we need to add everything that is required from the conf-file if we need some input from the user.

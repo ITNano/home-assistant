@@ -15,11 +15,11 @@ from homeassistant.components.group import \
 _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = 'threat_detection'
-ENTITIY_ID_FORMAT = DOMAIN + '.[]'
-DEPENDENCIES = ['group']
 
-GROUP_NAME_ALL_IDS = 'all_ids'
-ENTITY_ID_ALL_IDS = GROUP_ENTITY_ID_FORMAT.format('all_ids')
+ENTITIY_ID_FORMAT = DOMAIN + '.[]'
+
+DEPENDENCIES = []
+
 
 CONF_TEXT = 'text'
 DEFAULT_TEXT = 'No text!'
@@ -29,9 +29,10 @@ def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     #This seems to be a thing. I don't know what it does. May have to do with getting things to and from dependent
     #platforms? It seems to break our stuff.
-    component = EntityComponent(_LOGGER, DOMAIN, hass, GROUP_NAME_ALL_IDS)
+    component = EntityComponent(_LOGGER, DOMAIN, hass)
     yield from component.async_setup(config)
 
+    
     hass.states.async_set('threat_detection.detections', 0)
 
 
@@ -39,10 +40,6 @@ def async_setup(hass, config=None):
 
     return True
 
-#def setup(hass, config):
-#    hass.states.set('threat_detection.detections', 0)
-#    _LOGGER.info("The threat detection component is set up through the setup() method.")
-#    return True
 
 
 

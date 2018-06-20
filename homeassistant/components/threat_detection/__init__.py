@@ -20,9 +20,18 @@ ENTITIY_ID_FORMAT = DOMAIN + '.[]'
 
 DEPENDENCIES = []
 
+#Here we need to add everything that is required from the conf-file if we need some input from the user.
+CONFIG_SCHEMA = vol.Schema({
+    DOMAIN: vol.Schema({
+        vol.Required(): cv.string,
+    })
+}, extra=vol.ALLOW_EXTRA)
 
-CONF_TEXT = 'text'
-DEFAULT_TEXT = 'No text!'
+#Configuration input
+CONF_INPUT = 'input'
+DEFAULT_INPUT = "Just default input."
+DEFAULT_DETECTIONS = 0
+
 
 @asyncio.coroutine
 def async_setup(hass, config=None):
@@ -32,14 +41,19 @@ def async_setup(hass, config=None):
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     yield from component.async_setup(config)
 
-    
-    hass.states.async_set('threat_detection.detections', 0)
+    userinput = config[DOMAIN].get(CONF_INPUT, DEFAULT_INPUT)
+
+    hass.states.async_set('threat_detection.Threats_Detectied', DEFAULT_DETECTIONS)
+    hass.states.async_set('threat_detection.Input', userinput)
 
 
-    _LOGGER.info("The threat_detection component is set up through the async_setup() method.")
+    _LOGGER.info("The threat_detection component is set up!")
 
     return True
 
-
+@property
+def state_attributes(self):
+    """Return state attributes of the component"""
+    return self._attributes
 
 

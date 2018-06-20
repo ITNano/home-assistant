@@ -18,17 +18,18 @@ ENTITIY_ID_FORMAT = DOMAIN + '.[]'
 
 DEPENDENCIES = []
 
-#Here we need to add everything that is required from the conf-file if we need some input from the user.
-CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(): cv.string,
-    })
-})
-
 #Configuration input
 CONF_INPUT = 'input'
 DEFAULT_INPUT = "Just default input."
 DEFAULT_DETECTIONS = 0
+#Here we need to add everything that is required from the conf-file if we need some input from the user.
+CONFIG_SCHEMA = vol.Schema({
+    DOMAIN: vol.Schema({
+        vol.Required(CONF_INPUT, DEFAULT_INPUT): cv.string,
+    })
+})
+
+
 
 
 @asyncio.coroutine

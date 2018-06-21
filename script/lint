@@ -3,7 +3,7 @@
 
 cd "$(dirname "$0")/.."
 
-export files="$(git diff $(git merge-base upstream/dev HEAD) --diff-filter=d --name-only | grep -e '\.py$')"
+export files="$(git diff $(git merge-base origin/master HEAD) --diff-filter=d --name-only | grep -e '\.py$')"
 echo '================================================='
 echo '=                FILES CHANGED                  ='
 echo '================================================='

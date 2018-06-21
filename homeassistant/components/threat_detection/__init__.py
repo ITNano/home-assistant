@@ -40,7 +40,7 @@ def async_setup(hass, config=None):
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     yield from component.async_setup(config)
 
-    userinput = config[DOMAIN].get(CONF_INPUT, DEFAULT_INPUT)
+    userinput = config[DOMAIN].get(CONF_TEXT, DEFAULT_INPUT)
 
     hass.states.async_set('threat_detection.Threats_Detectied', DEFAULT_DETECTIONS)
     hass.states.async_set('threat_detection.Input', userinput)

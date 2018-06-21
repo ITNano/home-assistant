@@ -25,7 +25,7 @@ DEFAULT_DETECTIONS = 0
 #Here we need to add everything that is required from the conf-file if we need some input from the user.
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
-        vol.Required(CONF_INPUT, DEFAULT_INPUT): cv.string,
+        vol.Required(CONF_INPUT): cv.string,
     })
 }, extra=vol.ALLOW_EXTRA)
 

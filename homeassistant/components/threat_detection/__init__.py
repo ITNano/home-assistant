@@ -53,7 +53,7 @@ def async_setup(hass, config=None):
     return True
 
 
-@property
-def state_attributes(self):
-    """Return state attributes of the component"""
-    return self._attributes
+# @property
+# def state_attributes(self):
+#     """Return state attributes of the component"""
+#     return self._attributes

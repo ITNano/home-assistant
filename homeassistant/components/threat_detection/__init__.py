@@ -65,8 +65,15 @@ def async_setup(hass, config=None):
 
 def state_changed_handler(event):
     """Handles what to do in the event of a state change."""
-    _LOGGER.info("State has changed! Event:  %s",
-                 event.as_dict())
+    event_dict = event.as_dict()
+    entity_id = event_dict['data']['entity_id']
+    new_state_dict = event_dict['data']['new_state'].as_dict()
+    old_state_dict = event_dict['data']['old_state'].as_dict()
+    _LOGGER.info("State has changed! Event:  %s\n"
+                 "ENTITY_ID: %s\n"
+                 "NEW_STATE: %s\n"
+                 "OLD_STATE: %s",
+                 event_dict, entity_id, new_state_dict, old_state_dict)
 
 # @property
 # def state_attributes(self):

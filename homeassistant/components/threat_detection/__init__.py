@@ -54,30 +54,19 @@ def async_setup(hass, config=None):
 
     _LOGGER.info("The threat_detection component is set up!")
 
-    def event_listener(event):
-        """Sends all events that happens to the event handler that does IO."""
-        hass.async_add_job(handler, event)
-
     def state_changed_listener(event):
         """Listens to and handle state changes in the state machine."""
         hass.async_add_job(state_changed_handler, event)
 
-    hass.bus.async_listen(const.MATCH_ALL, event_listener)
     hass.bus.async_listen(const.EVENT_STATE_CHANGED, state_changed_listener)
 
     return True
 
 
-def handler(event):
-    """Handles the events that the listener listens to."""
-    _LOGGER.info("Event has happened! Event: %s ", event.as_dict())
-
-
 def state_changed_handler(event):
     """Handles what to do in the event of a state change."""
-    _LOGGER.info("State has changed! Entity ID:  %s, New state: %s ",
-                 event.as_dict()['data']['entity_id'],
-                 event.as_dict()['data']['new_state'])
+    _LOGGER.info("State has changed! Event:  %s",
+                 event.as_dict())
 
 # @property
 # def state_attributes(self):

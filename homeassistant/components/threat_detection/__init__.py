@@ -76,7 +76,8 @@ def handler(event):
 def state_changed_handler(event):
     """Handles what to do in the event of a state change."""
     _LOGGER.info("State has changed! Entity ID:  %s, New state: %s ",
-                 event.entity_id, event.new_state)
+                 event.as_dict()['data']['entity_id'],
+                 event.as_dict()['data']['new_state'])
 
 # @property
 # def state_attributes(self):

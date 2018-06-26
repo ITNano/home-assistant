@@ -58,7 +58,12 @@ def async_setup(hass, config=None):
         """Sends all events that happens to the event handler that does IO."""
         hass.async_add_job(handler, event)
 
+    def state_changed_listener(event):
+        """Listens to and handle state changes in the state machine."""
+        hass.async_add_job(state_changed_handler, event)
+
     hass.bus.async_listen(const.MATCH_ALL, event_listener)
+    hass.bus.async_listen(const.EVENT_STATE_CHANGED, state_changed_listener)
 
     return True
 
@@ -66,6 +71,12 @@ def async_setup(hass, config=None):
 def handler(event):
     """Handles the events that the listener listens to."""
     _LOGGER.info("Event has happened! Event: %s ", event.as_dict())
+
+
+def state_changed_handler(event):
+    """Handles what to do in the event of a state change."""
+    _LOGGER.info("State has changed! Entity ID:  %s, New state: %s ",
+                 event.entity_id, event.new_state)
 
 # @property
 # def state_attributes(self):

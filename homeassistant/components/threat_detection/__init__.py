@@ -68,7 +68,10 @@ def state_changed_handler(event):
     event_dict = event.as_dict()
     entity_id = event_dict['data']['entity_id']
     new_state_dict = event_dict['data']['new_state'].as_dict()
-    old_state_dict = event_dict['data']['old_state'].as_dict()
+    if event_dict['data'] is not None:
+        old_state_dict = event_dict['data']['old_state'].as_dict()
+    else:
+        old_state_dict = {'data': "none"}
     _LOGGER.info("State has changed! Event:  %s\n"
                  "ENTITY_ID: %s\n"
                  "NEW_STATE: %s\n"

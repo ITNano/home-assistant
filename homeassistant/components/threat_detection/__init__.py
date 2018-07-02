@@ -49,8 +49,8 @@ def async_setup(hass, config=None):
     hass.states.async_set('threat_detection.Input', userinput)
 
     devices = hass.states.async_entity_ids()
-
-    _LOGGER.info("DEVICE_SCAN" + devices)
+    for device in devices:
+        _LOGGER.info("DEVICE_SCAN" + device)
 
     _LOGGER.info("The threat_detection component is set up!")
 

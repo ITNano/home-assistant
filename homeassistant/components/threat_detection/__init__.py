@@ -48,7 +48,7 @@ def async_setup(hass, config=None):
         'threat_detection.Threats_Detected', DEFAULT_DETECTIONS)
     hass.states.async_set('threat_detection.Input', userinput)
 
-    devices = hass.states.divece_tracker['data']
+    devices = hass.states.entity_ids()
 
     _LOGGER.info("DEVICE_SCAN" + devices)
 

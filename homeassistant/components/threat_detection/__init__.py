@@ -10,7 +10,6 @@ import logging
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_component import EntityComponent
-import homeassistant.helpers.discovery as discovery
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -50,9 +49,11 @@ def async_setup(hass, config=None):
         'threat_detection.Threats_Detected', DEFAULT_DETECTIONS)
     hass.states.async_set('threat_detection.Input', userinput)
 
-    devices = yield from hass.components.device_tracker.async_load_config('/home/scionova/.homeassistant/known_devices.yaml', hass, 0)
+    devices = yield from hass.components.device_tracker.async_load_config(
+        '/home/scionova/.homeassistant/known_devices.yaml', hass, 0)
     for device in devices:
-        _LOGGER.info("DEVICE_SCAN: device %s has mac %s", device.entity_id, device.mac)
+        _LOGGER.info(
+            "DEVICE_SCAN: device %s has mac %s", device.entity_id, device.mac)
 
     _LOGGER.info("The threat_detection component is set up!")
 

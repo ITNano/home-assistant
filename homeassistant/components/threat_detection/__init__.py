@@ -10,6 +10,8 @@ import logging
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_component import EntityComponent
+import homeassistant.helpers.discovery as discovery
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,7 +50,7 @@ def async_setup(hass, config=None):
         'threat_detection.Threats_Detected', DEFAULT_DETECTIONS)
     hass.states.async_set('threat_detection.Input', userinput)
 
-    platforms = hass.helpers.discover.async_discover_platform()
+    platforms = discovery.async_discover_platform()
     for platform in platforms:
         _LOGGER.info("PLATFORM_DISCOVERY" + platform)
 

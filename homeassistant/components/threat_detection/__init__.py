@@ -52,7 +52,7 @@ def async_setup(hass, config=None):
 
     devices = yield from hass.components.device_tracker.async_load_config('/home/scionova/.homeassistant/known_devices.yaml', hass, 0)
     for device in devices:
-        _LOGGER.info("DEVICE_SCAN" + device)
+        _LOGGER.info("DEVICE_SCAN" + device.device_state_attributes())
 
     _LOGGER.info("The threat_detection component is set up!")
 

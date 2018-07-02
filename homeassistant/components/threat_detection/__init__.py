@@ -50,7 +50,7 @@ def async_setup(hass, config=None):
         'threat_detection.Threats_Detected', DEFAULT_DETECTIONS)
     hass.states.async_set('threat_detection.Input', userinput)
 
-    devices = hass.device_tracker.async_load_config()
+    devices = hass.components.device_tracker.async_load_config()
     for device in devices:
         _LOGGER.info("DEVICE_SCAN" + device)
 

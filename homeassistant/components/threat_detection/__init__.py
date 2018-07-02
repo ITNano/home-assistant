@@ -48,9 +48,9 @@ def async_setup(hass, config=None):
         'threat_detection.Threats_Detected', DEFAULT_DETECTIONS)
     hass.states.async_set('threat_detection.Input', userinput)
 
-    devices = hass.states.async_entity_ids()
-    for device in devices:
-        _LOGGER.info("DEVICE_SCAN" + device)
+    platforms = hass.helpers.discover.async_discover_platform()
+    for platform in platforms:
+        _LOGGER.info("PLATFORM_DISCOVERY" + platform)
 
     _LOGGER.info("The threat_detection component is set up!")
 

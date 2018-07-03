@@ -1413,3 +1413,6 @@ zigpy-xbee==0.1.1
 
 # homeassistant.components.zha
 zigpy==0.1.0
+
+# homeassistant.components.threat_detection
+scapy==2.4.0

@@ -21,6 +21,9 @@ ENTITIY_ID_FORMAT = DOMAIN + '.[]'
 
 DEPENDENCIES = []
 
+#
+KNOWN_DEVICES = 'known_devices.yaml'
+
 # Configuration input
 CONF_TEXT = 'test'
 DEFAULT_TEXT = 'default'
@@ -50,11 +53,8 @@ def async_setup(hass, config=None):
         'threat_detection.Threats_Detected', DEFAULT_DETECTIONS)
     hass.states.async_set('threat_detection.Input', userinput)
 
-    config_dir = hass.config.config_dir
-    known_devices = 'known_devices.yaml'
-
     devices = yield from hass.components.device_tracker.async_load_config(
-        os.path.join(config_dir, known_devices), hass, 0)
+        os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
     for device in devices:
         _LOGGER.info(
             "DEVICE_SCAN: device %s has mac %s", device.entity_id, device.mac)

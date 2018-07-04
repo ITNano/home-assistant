@@ -57,7 +57,7 @@ def async_setup(hass, config=None):
 
     devices = yield from hass.components.device_tracker.async_load_config(
         os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
-    _LOGGER.info(setup_devices(devices))
+    setup_devices(devices)
 
     _LOGGER.info("The threat_detection component is set up!")
 
@@ -69,7 +69,7 @@ def setup_devices(devices):
     for device in devices:
         DEVICES.update({device.mac: device.entity_id})
 
-    print_dict(DEVICES, [])
+    _LOGGER.info(print_dict(DEVICES, []))
 
 
 def print_dict(obj, str):

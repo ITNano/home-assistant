@@ -57,7 +57,7 @@ def async_setup(hass, config=None):
 
     devices = yield from hass.components.device_tracker.async_load_config(
         os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
-    setup_devices(devices)
+    _LOGGER.info(setup_devices(devices))
 
     _LOGGER.info("The threat_detection component is set up!")
 
@@ -69,26 +69,28 @@ def setup_devices(devices):
     for device in devices:
         DEVICES.update({device.mac: device.entity_id})
 
-    print_dict(DEVICES)
+    print_dict(DEVICES, [])
 
 
-def print_dict(obj):
+def print_dict(obj, string):
     """Prints a dict to log, may or may not be done prettily."""
     if isinstance(obj, dict):
         for key, value in obj.items():
             if hasattr(value, '__iter__'):
-                _LOGGER.info("KEY = %s", key)
-                print_dict(value)
+                string.append("KEY = %s\n", key)
+                print_dict(value, string)
             else:
-                _LOGGER.info('%s : %s', key, value)
+                string.append('%s : %s\n', key, value)
     elif isinstance(obj, list):
         for value in obj:
             if hasattr(value, '__iter__'):
-                print_dict(value)
+                print_dict(value, string)
             else:
-                _LOGGER.info(value)
+                string.append('%s\n', value)
     else:
-        _LOGGER(obj)
+        return obj
+
+    return ''.join(string)
 
 
 # @property

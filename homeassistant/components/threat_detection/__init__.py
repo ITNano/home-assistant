@@ -77,16 +77,16 @@ def print_dict(obj, string):
     if isinstance(obj, dict):
         for key, value in obj.items():
             if hasattr(value, '__iter__'):
-                string.append("KEY = %s\n", key)
+                string.append("KEY = ".join(key).join('\n'))
                 print_dict(value, string)
             else:
-                string.append('%s : %s\n', key, value)
+                string.append(''.join(key).join(' : ').join(value).join('\n'))
     elif isinstance(obj, list):
         for value in obj:
             if hasattr(value, '__iter__'):
                 print_dict(value, string)
             else:
-                string.append('%s\n', value)
+                string.append(value)
     else:
         return obj
 

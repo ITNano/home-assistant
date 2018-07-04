@@ -98,6 +98,7 @@ def pretty_string(obj, string):
                 else:
                     string.append(value)
                 string.append("\n")
+                filter(None, string)
                 return "".join(string)
     elif isinstance(obj, list):
         for value in obj:
@@ -105,6 +106,7 @@ def pretty_string(obj, string):
                 pretty_string(value, string)
             else:
                 string.append(value)
+                filter(None, string)
                 return "".join(string)
     else:
         return obj

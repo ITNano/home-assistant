@@ -72,25 +72,25 @@ def setup_devices(devices):
     _LOGGER.info(print_dict(DEVICES, []))
 
 
-def print_dict(obj, str):
+def print_dict(obj, string):
     """Prints a dict to log, may or may not be done prettily."""
     if isinstance(obj, dict):
         for key, value in obj.items():
             if hasattr(value, '__iter__'):
-                str.append("KEY = ".join(key).join('\n'))
-                print_dict(value, str)
+                string.append("KEY = ".join(key).join('\n'))
+                print_dict(value, string)
             else:
-                str.append(''.join(key).join(' : ').join(value).join('\n'))
+                string.append(''.join(key).join(' : ').join(value).join('\n'))
     elif isinstance(obj, list):
         for value in obj:
             if hasattr(value, '__iter__'):
-                print_dict(value, str)
+                print_dict(value, string)
             else:
-                str.append(value)
+                string.append(value)
     else:
         return obj
 
-    return ''.join(str)
+    return ''.join(string)
 
 
 # @property

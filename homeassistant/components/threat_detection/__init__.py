@@ -81,13 +81,22 @@ def pretty_string(obj, string):
         for key, value in obj.items():
             if hasattr(value, '__iter__'):
                 string.append("KEY = ")
-                string.append(key)
+                if key is None:
+                    string.append(" ")
+                else:
+                    string.append(key)
                 string.append("\n")
                 pretty_string(value, string)
             else:
-                string.append(key)
+                if key is None:
+                    string.append(" ")
+                else:
+                    string.append(key)
                 string.append(" : ")
-                string.append(value)
+                if key is None:
+                    string.append(" ")
+                else:
+                    string.append(value)
                 string.append("\n")
                 return "".join(string)
     elif isinstance(obj, list):

@@ -69,28 +69,33 @@ def setup_devices(devices):
     for device in devices:
         DEVICES.update({device.mac: device.entity_id})
 
-    _LOGGER.info(print_dict(DEVICES, []))
+    _LOGGER.info(pretty_string(DEVICES, []))
 
 
-def print_dict(obj, string):
+def pretty_string(obj, string):
     """Prints a dict to log, may or may not be done prettily."""
     if isinstance(obj, dict):
         for key, value in obj.items():
             if hasattr(value, '__iter__'):
-                string.append("KEY = ".join(key).join('\n'))
-                print_dict(value, string)
+                string.append("KEY = ")
+                string.append(key)
+                string.append('\n')
+                pretty_string(value, string)
             else:
-                string.append(''.join(key).join(' : ').join(value).join('\n'))
+                string.append(key)
+                string.append(' : ')
+                string.append(value)
+                string.append('\n')
+                return ''.join(string)
     elif isinstance(obj, list):
         for value in obj:
             if hasattr(value, '__iter__'):
-                print_dict(value, string)
+                pretty_string(value, string)
             else:
                 string.append(value)
+                return ''.join(string)
     else:
         return obj
-
-    return ''.join(string)
 
 
 # @property

@@ -8,10 +8,10 @@ How to run network capture - from step 0 to YAY:
 
 3. Add execute privileges (chmod +x) if necessary
 
-4. monitor-help.sh install [path]	, where path is install path for sources.
+4. sudo monitor-help.sh install [path]	, where path is install path for sources.
 	Say yes when prompted to continue
 
-5. monitor-help.sh ha_services
+5. sudo monitor-help.sh ha_services
 	Provide requested information
 
 6. (crontab -l ; echo \"  0 *  *   *   *     rm -f [HOMEASSISTANT_CONF_PATH_HERE]/traces/*.pcap\") | crontab

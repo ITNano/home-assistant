@@ -35,6 +35,8 @@ CONFIG_SCHEMA = vol.Schema({
     })
 }, extra=vol.ALLOW_EXTRA)
 
+CAPTURER = None
+
 
 @asyncio.coroutine
 def async_setup(hass, config=None):
@@ -53,8 +55,9 @@ def async_setup(hass, config=None):
     hass.states.async_set('threat_detection.Input', userinput)
     
     # Start capturing packets from network
-    capturer = PacketCapturer(join(hass.config.config_dir, "traces"))
-    capturer.add_callback(on_network_capture)
+    global CAPTURER
+    CAPTURER = PacketCapturer(join(hass.config.config_dir, "traces"))
+    CAPTURER.add_callback(on_network_capture)
 
     _LOGGER.info("The threat_detection component is set up!")
 

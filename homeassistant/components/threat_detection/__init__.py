@@ -67,36 +67,37 @@ def async_setup(hass, config=None):
 
 def setup_devices(devices):
     """Sets up the data structure for the information about the devices."""
+    _LOGGER.info(devices)
     for device in devices:
         DEVICES.update({device.entity_id: {'mac': device.mac,
                                            'platform': device.platform}})
 
-    _LOGGER.info(pretty_string(DEVICES, []))
+    _LOGGER.info(DEVICES)
 
 
-def pretty_string(obj, string_builder):
-    """Prints a dict to log, may or may not be done prettily."""
-    if isinstance(obj, dict):
-        for key, value in obj.items():
-            if hasattr(value, '__iter__') and not isinstance(value, str):
-                string_builder.append(str(key))
-                string_builder.append("\n")
-                return pretty_string(value, string_builder)
-            else:
-                string_builder.append(str(key))
-                string_builder.append(" : ")
-                string_builder.append(str(value))
-                string_builder.append("\n")
-                return " ".join(string_builder)
-    elif isinstance(obj, list):
-        for value in obj:
-            if hasattr(value, '__iter__'):
-                return pretty_string(value, string_builder)
-            else:
-                string_builder.append(str(value))
-                return " ".join(string_builder)
-    else:
-        return obj
+# def pretty_string(obj, string_builder):
+#     """Prints a dict to log, may or may not be done prettily."""
+#     if isinstance(obj, dict):
+#         for key, value in obj.items():
+#             if hasattr(value, '__iter__') and not isinstance(value, str):
+#                 string_builder.append(str(key))
+#                 string_builder.append("\n")
+#                 return pretty_string(value, string_builder)
+#             else:
+#                 string_builder.append(str(key))
+#                 string_builder.append(" : ")
+#                 string_builder.append(str(value))
+#                 string_builder.append("\n")
+#                 return " ".join(string_builder)
+#     elif isinstance(obj, list):
+#         for value in obj:
+#             if hasattr(value, '__iter__'):
+#                 return pretty_string(value, string_builder)
+#             else:
+#                 string_builder.append(str(value))
+#                 return " ".join(string_builder)
+#     else:
+#         return obj
 
 
 # @property

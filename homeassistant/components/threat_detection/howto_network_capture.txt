@@ -1,0 +1,21 @@
+How to run network capture - from step 0 to YAY:
+------------------------------------------------
+0. This is where you start
+
+1. Get a USB-dongle which supports monitor mode (Panda PAU06 maybe?)
+
+2. Download monitor-help.sh (to appropriate folder on your device)
+
+3. Add execute privileges (chmod +x) if necessary
+
+4. monitor-help.sh install [path]	, where path is install path for sources.
+	Say yes when prompted to continue
+
+5. monitor-help.sh ha_services
+	Provide requested information
+
+6. (crontab -l ; echo \"  0 *  *   *   *     rm -f [HOMEASSISTANT_CONF_PATH_HERE]/traces/*.pcap\") | crontab
+
+7. sudo systemctl start trafficcapture.service
+
+8. Yay!

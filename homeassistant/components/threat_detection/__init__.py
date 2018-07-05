@@ -69,8 +69,9 @@ def setup_devices(devices):
     """Sets up the data structure for the information about the devices."""
     _LOGGER.info(devices)
     for device in devices:
-        DEVICES.update({device.entity_id: {'mac': device.mac,
-                                           'platform': device.platform}})
+        DEVICES.update({device.mac: {'entity_id': device.entity_id,
+                                     'platform': device.platform,
+                                     'attributes': device.attributes}})
 
     _LOGGER.info("DEVICE_SCAN: %s", DEVICES)
 

@@ -59,6 +59,8 @@ def async_setup(hass, config=None):
         os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
 
     setup_devices(devices)
+    _LOGGER.info("STATE_MACHINE_ENTITY_IDS: %s",
+                 hass.stateMachine.async_entity_ids)
 
     _LOGGER.info("The threat_detection component is set up!")
 
@@ -70,7 +72,9 @@ def setup_devices(devices):
     _LOGGER.info(devices)
     for device in devices:
         DEVICES.update({device.mac: {'entity_id': device.entity_id,
-                                     'name': device.name}})
+                                     'name': device.name,
+                                     'platform': device.p}})
+
 
     _LOGGER.info("DEVICE_SCAN: %s", DEVICES)
 

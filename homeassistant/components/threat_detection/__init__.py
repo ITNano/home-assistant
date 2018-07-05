@@ -70,8 +70,7 @@ def setup_devices(devices):
     _LOGGER.info(devices)
     for device in devices:
         DEVICES.update({device.mac: {'entity_id': device.entity_id,
-                                     'platform': device.platform,
-                                     'attributes': device.attributes}})
+                                     'name': device.name}})
 
     _LOGGER.info("DEVICE_SCAN: %s", DEVICES)
 

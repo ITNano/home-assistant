@@ -60,7 +60,7 @@ def async_setup(hass, config=None):
 
     setup_devices(devices)
     _LOGGER.info("STATE_MACHINE_ENTITY_IDS: %s",
-                 hass.stateMachine.async_entity_ids)
+                 hass.states.async_entity_ids)
 
     _LOGGER.info("The threat_detection component is set up!")
 

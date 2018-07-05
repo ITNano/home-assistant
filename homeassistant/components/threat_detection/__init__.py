@@ -72,7 +72,7 @@ def setup_devices(devices):
         DEVICES.update({device.entity_id: {'mac': device.mac,
                                            'platform': device.platform}})
 
-    _LOGGER.info(DEVICES)
+    _LOGGER.info("DEVICE_SCAN: %s", DEVICES)
 
 
 # def pretty_string(obj, string_builder):

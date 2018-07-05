@@ -59,8 +59,8 @@ def async_setup(hass, config=None):
         os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
 
     setup_devices(devices)
-    _LOGGER.info("STATE_MACHINE_ENTITY_IDS: %s",
-                 hass.states.async_entity_ids)
+    entity_ids = yield from hass.states.async_entity_ids()
+    _LOGGER.info("STATE_MACHINE_ENTITY_IDS: %s", entity_ids)
 
     _LOGGER.info("The threat_detection component is set up!")
 

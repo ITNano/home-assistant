@@ -61,6 +61,7 @@ def async_setup(hass, config=None):
     return True
     
 def on_network_capture(packet_list):
+    """Called when a network packet list has been captured """
     _LOGGER.info(packet_list)
 
 
@@ -71,10 +72,13 @@ def on_network_capture(packet_list):
 
 
 class PacketCapturer:
+    """Reads network packet captures and provides a way to register
+       callbacks to receive this data """
 
     from watchdog.events import FileSystemEventHandler
 
     def __init__(self, path):
+        """Initializes and starts to monitor the given path """
         self.callbacks = []
         from watchdog.observers import Observer
         self.observer = Observer()
@@ -82,36 +86,48 @@ class PacketCapturer:
         self.observer.start()
         
     def on_event(self, packet_list):
+        """Distributes new packets to registered callbacks """
         for callback in self.callbacks:
             callback(packet_list)
             
     def add_callback(self, callback):
+        """Registers a callback for data """
         if callback is not None:
             self.callbacks.append(callback)
 
     def __del__(self):
+        """Stop and remove path monitoring """
         if self.observer is not None:
             self.observer.stop()
             self.observer.join()
             self.observer = None
             
     class PacketCaptureHandler(FileSystemEventHandler):
+        """Handler to handle pcap file read preprocessing """
 
         def __init__(self, callback):
+            """Create a handler """
             super(PacketCapturer.PacketCaptureHandler, self).__init__()
             self.callback = callback
 
         def on_created(self, event):
+            """Reads, interprets and removes all pcap files in the monitored
+               folder except for the newest one (due to tcpdump impl.) """
             from scapy.all import rdpcap, PacketList
             path = dirname(event.src_path)
+            # Ignore directories and the most recent created file
             all_files = [f for f in os.listdir(path) if isfile(join(path, f))]
             files = list(filter(self.file_filter(event.src_path), all_files))
+            # Parse data from pcap format
             data = [rdpcap(join(path, file)) for file in files]
+            # Remove read files so data are only read once
             for file in files:
                 os.remove(join(path, file))
+            # Notify the user of the found data
             self.callback(PacketList([pkt for pkts in data for pkt in pkts]))
                 
         def file_filter(self, ignore_file):
+            """Filter to select .pcap files and ignore the given file """
             def f_filter(f):
                 return f.endswith('.pcap') and f != basename(ignore_file)
             return f_filter

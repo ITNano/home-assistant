@@ -84,29 +84,27 @@ def pretty_string(obj, string):
                 if key is None:
                     string.append(" ")
                 else:
-                    string.append(key)
+                    string.append(str(key))
                 string.append("\n")
                 pretty_string(value, string)
             else:
                 if key is None:
                     string.append(" ")
                 else:
-                    string.append(key)
+                    string.append(str(key))
                 string.append(" : ")
                 if key is None:
                     string.append(" ")
                 else:
-                    string.append(value)
+                    string.append(str(value))
                 string.append("\n")
-                filter(None, string)
                 return "".join(string)
     elif isinstance(obj, list):
         for value in obj:
             if hasattr(value, '__iter__'):
                 pretty_string(value, string)
             else:
-                string.append(value)
-                filter(None, string)
+                string.append(str(value))
                 return "".join(string)
     else:
         return obj

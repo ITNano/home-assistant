@@ -1416,3 +1416,4 @@ zigpy==0.1.0
 
 # homeassistant.components.threat_detection
 scapy==2.4.0
+watchdog==0.8.3

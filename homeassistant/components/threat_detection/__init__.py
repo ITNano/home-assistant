@@ -159,8 +159,8 @@ def load_profiles(filename):
             indata = yaml.load(infile)
         for mac, prof in indata:
             if assure_profile_exists(mac):
-                PROFILES[mac].profiling_end = prof.prof_end
-                PROFILES[mac].profile = prof.prof
+                PROFILES[mac].profiling_end = prof['prof_end']
+                PROFILES[mac].profile = prof['prof']
     except FileNotFoundError:
         # Will happen on first run due to no previous save file. 
         pass
@@ -168,7 +168,7 @@ def load_profiles(filename):
 def store_profiles(filename):
     outdata = {}
     for mac, prof in PROFILES.items():
-        outdata[mac] = {prof_end: prof.profiling_end, prof: prof.profile}
+        outdata[mac] = {'prof_end': prof.profiling_end, 'prof': prof.profile}
     with open(filename, 'w') as outfile:
         yaml.dump(outdata, outfile, default_flow_style=False)
 

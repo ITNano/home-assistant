@@ -243,7 +243,7 @@ def add_profile_callbacks():
     
 """ Handle data that is supposed to be stored """
 def update_whitelist(profile, packet):
-    _LOGGER.info("Handling packet: "+str(packet))
+    _LOGGER.info("Handling packet: "+packet.show(dump=True))
     is_sender = profile.mac == packet.getlayer("Ether").src
     if packet.haslayer("IP"):
         if is_sender:

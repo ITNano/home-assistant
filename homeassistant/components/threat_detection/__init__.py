@@ -236,5 +236,21 @@ class Profile(object):
 def add_profile_callbacks():
     Profile.add_updater(update_whitelist)
     
+""" Handle data that is supposed to be stored """
+def update_whitelist(profile, packet):
+    _LOGGER.info("Handling packet: "+str(packet))
+    is_sender = profile.mac == packet.getlayer("Ether").src
+    if packet.haslayer("IP"):
+            ip = packet.getlayer("IP").dst
+        else:
+            ip = packet.getlayer("IP").src
+        whitelist = profile.get("ip_whitelist", [])
+        if ip not in whitelist:
+            whitelist.append(ip)
+        profile.set("ip_whitelist", whitelist)
+
+""" Handle data that is supposed to be checked """
+
+""" END """
     
     

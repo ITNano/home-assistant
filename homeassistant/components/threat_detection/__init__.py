@@ -157,7 +157,7 @@ def load_profiles(filename):
     try:
         with open(filename, 'r') as infile:
             indata = yaml.load(infile)
-        for mac, prof in indata:
+        for mac, prof in indata.items():
             if assure_profile_exists(mac):
                 PROFILES[mac].profiling_end = prof['prof_end']
                 PROFILES[mac].profile = prof['prof']

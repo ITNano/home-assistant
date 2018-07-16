@@ -166,7 +166,7 @@ def load_profiles(filename):
 
 def store_profiles(filename):
     outdata = {}
-    for mac, prof in PROFILES:
+    for mac, prof in PROFILES.items():
         outdata[mac] = {prof_end: prof.profiling_end, prof: prof.profile}
     with open(filename, 'w') as outfile:
         yaml.dump(outdata, outfile, default_flow_style=False)

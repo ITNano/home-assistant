@@ -14,6 +14,7 @@ import yaml
 import asyncio
 import logging
 import voluptuous as vol
+import homeassistant.const as const
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_component import EntityComponent
 
@@ -40,7 +41,7 @@ CONFIG_SCHEMA = vol.Schema({
 CAPTURER = None
 PROFILES = {}
 IGNORE_LIST = ['ff:ff:ff:ff:ff:ff', '2c:4d:54:75:05:10']
-STORAGE_NAME = join(hass.config.config_dir, 'td_profiles.yaml')
+STORAGE_NAME = 'td_profiles.yaml'
 
 
 @asyncio.coroutine
@@ -63,8 +64,12 @@ def async_setup(hass, config=None):
     global CAPTURER
     CAPTURER = PacketCapturer(join(hass.config.config_dir, "traces"))
     CAPTURER.add_callback(on_network_capture)
-    load_profiles()
+    # Setup profiling
+    load_profiles(join(hass.config.config_dir, STORAGE_NAME))
     add_profile_callbacks()
+    def save_profiles(event):
+        store_profiles(join(hass.config.config_dir, STORAGE_NAME))
+    hass.bus.async_listen(const.EVENT_HOMEASSISTANT_STOP, save_profiles)
 
     _LOGGER.info("The threat_detection component is set up!")
 
@@ -147,9 +152,9 @@ class PacketCapturer:
             
 
 """ Handling of profiling """
-def load_profiles():
+def load_profiles(filename):
     try:
-        with open(STORAGE_NAME, 'r') as infile:
+        with open(filename, 'r') as infile:
             indata = yaml.load(infile)
         for mac, prof in indata:
             if assure_profile_exists(mac):
@@ -159,11 +164,11 @@ def load_profiles():
         # Will happen on first run due to no previous save file. 
         pass
 
-def store_profiles():
+def store_profiles(filename):
     outdata = {}
     for mac, prof in PROFILES:
         outdata[mac] = {prof_end: prof.profiling_end, prof: prof.profile}
-    with open(STORAGE_NAME, 'w') as outfile:
+    with open(filename, 'w') as outfile:
         yaml.dump(outdata, outfile, default_flow_style=False)
 
 def assure_profile_exists(mac):

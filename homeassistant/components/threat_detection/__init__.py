@@ -91,6 +91,7 @@ def safe_exc(func, default, *args):
     try:
         return func(*args)
     except:
+        _LOGGER.warning("Caught an exception for Threat Detection.")
         return default
 
 

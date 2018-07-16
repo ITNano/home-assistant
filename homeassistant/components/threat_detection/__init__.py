@@ -87,6 +87,12 @@ def on_network_capture(packet_list):
 #     """Return state attributes of the component"""
 #     return self._attributes
 
+def safe_exc(func, default, *args):
+    try:
+        return func(*args)
+    except:
+        return default
+
 
 """ Handling of network traffic """
 class PacketCapturer:
@@ -137,7 +143,7 @@ class PacketCapturer:
             all_files = [f for f in os.listdir(path) if isfile(join(path, f))]
             files = list(filter(self.file_filter(event.src_path), all_files))
             # Parse data from pcap format
-            data = [rdpcap(join(path, file)) for file in files]
+            data = [safe_exc(rdpcap, [], join(path, file)) for file in files]
             # Remove read files so data are only read once
             for file in files:
                 os.remove(join(path, file))

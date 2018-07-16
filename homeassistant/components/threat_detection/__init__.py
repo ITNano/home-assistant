@@ -246,6 +246,7 @@ def update_whitelist(profile, packet):
     _LOGGER.info("Handling packet: "+str(packet))
     is_sender = profile.mac == packet.getlayer("Ether").src
     if packet.haslayer("IP"):
+        if is_sender:
             ip = packet.getlayer("IP").dst
         else:
             ip = packet.getlayer("IP").src

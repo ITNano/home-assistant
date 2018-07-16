@@ -70,6 +70,7 @@ def async_setup(hass, config=None):
     def save_profiles(event):
         store_profiles(join(hass.config.config_dir, STORAGE_NAME))
     hass.bus.async_listen(const.EVENT_HOMEASSISTANT_STOP, save_profiles)
+    hass.bus.async_listen('trigger_profile_save', save_profiles)
 
     _LOGGER.info("The threat_detection component is set up!")
 
@@ -243,7 +244,6 @@ def add_profile_callbacks():
     
 """ Handle data that is supposed to be stored """
 def update_whitelist(profile, packet):
-    _LOGGER.info("Handling packet: "+packet.show(dump=True))
     is_sender = profile.mac == packet.getlayer("Ether").src
     if packet.haslayer("IP"):
         if is_sender:

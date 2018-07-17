@@ -10,6 +10,7 @@ import time
 import os
 from os.path import dirname, basename, isfile, join
 from datetime import datetime, timedelta
+from threading import Lock
 import yaml
 import asyncio
 import logging
@@ -134,22 +135,25 @@ class PacketCapturer:
             """Create a handler """
             super(PacketCapturer.PacketCaptureHandler, self).__init__()
             self.callback = callback
+            self.lock = Lock()
 
         def on_created(self, event):
             """Reads, interprets and removes all pcap files in the monitored
                folder except for the newest one (due to tcpdump impl.) """
-            from scapy.all import rdpcap, PacketList
-            path = dirname(event.src_path)
-            # Ignore directories and the most recent created file
-            all_files = [f for f in os.listdir(path) if isfile(join(path, f))]
-            files = list(filter(self.file_filter(event.src_path), all_files))
-            # Parse data from pcap format
-            data = [safe_exc(rdpcap, [], join(path, file)) for file in files]
-            # Remove read files so data are only read once
-            for file in files:
-                os.remove(join(path, file))
-            # Notify the user of the found data
-            self.callback(PacketList([pkt for pkts in data for pkt in pkts]))
+            if self.lock.acquire(blocking=False):
+                from scapy.all import rdpcap, PacketList
+                path = dirname(event.src_path)
+                # Ignore directories and the most recent created file
+                all_files = [f for f in os.listdir(path) if isfile(join(path, f))]
+                files = list(filter(self.file_filter(event.src_path), all_files))
+                # Parse data from pcap format
+                data = [safe_exc(rdpcap, [], join(path, file)) for file in files]
+                # Remove read files so data are only read once
+                for file in files:
+                    os.remove(join(path, file))
+                # Notify the user of the found data
+                self.callback(PacketList([pkt for pkts in data for pkt in pkts]))
+                self.lock.release()
                 
         def file_filter(self, ignore_file):
             """Filter to select .pcap files and ignore the given file """

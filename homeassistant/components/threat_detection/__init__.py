@@ -141,6 +141,7 @@ class PacketCapturer:
             """Reads, interprets and removes all pcap files in the monitored
                folder except for the newest one (due to tcpdump impl.) """
             if self.lock.acquire(blocking=False):
+                _LOGGER.info("Handling packets")
                 from scapy.all import rdpcap, PacketList
                 path = dirname(event.src_path)
                 # Ignore directories and the most recent created file
@@ -149,6 +150,7 @@ class PacketCapturer:
                 # Parse data from pcap format
                 data = [safe_exc(rdpcap, [], join(path, file)) for file in files]
                 # Remove read files so data are only read once
+                _LOGGER.info("Removing %i files" % (len(files)))
                 for file in files:
                     os.remove(join(path, file))
                 # Notify the user of the found data

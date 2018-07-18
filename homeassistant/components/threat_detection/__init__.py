@@ -265,6 +265,9 @@ def get_IP_layer(pkt):
 def check_if_sender(profile, pkt):
     return profile.mac == pkt.getlayer("Ether").src
     
+def default_wlist_entry():
+    return {"mac": mac, "ip": [], "domain": [], "protocols": {}}
+    
 def find_whitelist_entry(profile, pkt, add_if_not_found=True, domain=None):
     macp = pkt.getlayer("Ether")
     is_sender = check_if_sender(profile, pkt)
@@ -281,7 +284,7 @@ def find_whitelist_entry(profile, pkt, add_if_not_found=True, domain=None):
             
     # Entry not found yet, so create it.
     if add_if_not_found:
-        wlists.append({"mac": mac, "ip": [], "domain": [], "protocols": {}})
+        wlists.append(default_wlist_entry())
         return wlists[-1]
     
 """ Handle data that is supposed to be stored """
@@ -322,6 +325,28 @@ def update_whitelist_layer4(profile, pkt, layer, proto):
     data["max_size"] = max(data["max_size"], packet_len)
     data["total_size"] += packet_len
     
+def update_whitelist_dns(profile, pkt):
+    if pkt.haslayer("DNS"):
+        is_sender = check_if_sender(profile, pkt)
+        if is_sender:
+            dnsp = pkt.getlayer("DNS")
+            records = [pkt.getlayer("DNSRR")[i] for i in range(dnsp.ancount)]
+            domain = records[0].rdata
+            ips = [r.rdata for r in records[1:]]
+            wlists = profile.get("send").get("whitelist")
+            entries = [wlist for wlist in wlists if ip in wlist.get("ip")
+                             for ip in ips]
+            if len(entries) < 2:
+                if len(entries)==1:
+                    e = entries[0]
+                else:
+                    e = default_wlist_entry()
+                    wlists.append(e)
+                e["domain"].append(domain)
+                e["ip"].extend([ip for ip in ips if not ip in e["ip"]])
+            else:
+                _LOGGER.warning("Dammit. Found two profiles for same host")
+                
 
 """ Handle data that is supposed to be checked """
 

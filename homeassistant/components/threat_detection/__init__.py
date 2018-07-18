@@ -225,7 +225,7 @@ class Profile(object):
     def __init__(self, mac):
         self.mac = mac
         self.profiling_end = datetime.now()+timedelta(days=1)
-        self.profile = {"send": {"whitelist": []}, "receive": {"whitelist": []}}
+        self.profile = {"ip": [], "send": {"whitelist": []}, "receive": {"whitelist": []}}
 
     def is_profiling(self):
         return datetime.now() < self.profiling_end
@@ -243,9 +243,6 @@ class Profile(object):
         checks = (checker(self, packet) for checker in Profile.checkers)
         errors = [check for check in checks if check is not None]
         return errors if len(errors) != 0 else None
-
-    def set(self, key, value):
-        self.profile[key] = value
 
     def get(self, key, default_val=None):
         return self.profile.get(key, default_val)
@@ -289,10 +286,13 @@ def find_whitelist_entry(profile, pkt, domain=None):
 def update_whitelist_ip(profile, pkt):
     ipp = get_IP_layer(pkt)
     if ipp is not None:
-        ip = ipp.dst if check_if_sender(profile, pkt) else ipp.src
+        is_sender = check_if_sender(profile, pkt)
+        ip = ipp.dst if is_sender else ipp.src
         wlist = find_whitelist_entry(profile, pkt)
         if ip not in wlist.get("ip"):
             wlist["ip"].append(ip)
+        if is_sender and ip not in profile.get("ip"):
+            profile.get("ip").append(ip)
             
 def update_whitelist_tcp(profile, pkt):
     if pkt.haslayer("TCP"):

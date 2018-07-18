@@ -267,10 +267,10 @@ def check_if_sender(profile, pkt):
     
 def find_whitelist_entry(profile, pkt, domain=None):
     macp = pkt.getlayer("Ether")
-    ipp = get_IP_layer(pkt)
     is_sender = check_if_sender(profile, pkt)
     mac = macp.dst if is_sender else macp.src
-    ip = ipp.dst if is_sender else ipp.src
+    ipp = get_IP_layer(pkt)
+    ip = None if ipp is None else ipp.dst if is_sender else ipp.src
     data = profile.get("send") if is_sender else profile.get("receive")
     wlists = data.get("whitelist")
     # More recent entries are more likely to be at the end of the list.

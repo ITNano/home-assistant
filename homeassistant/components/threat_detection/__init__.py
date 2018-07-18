@@ -225,7 +225,7 @@ class Profile(object):
     def __init__(self, mac):
         self.mac = mac
         self.profiling_end = datetime.now()+timedelta(days=1)
-        self.profile = {}
+        self.profile = {'sender': {whitelist: []}, 'receiver': {whitelist: []}}
 
     def is_profiling(self):
         return datetime.now() < self.profiling_end
@@ -252,20 +252,74 @@ class Profile(object):
         
         
 def add_profile_callbacks():
-    Profile.add_updater(update_whitelist)
+    Profile.add_updater(update_whitelist_ip)
+    Profile.add_updater(update_whitelist_tcp)
+    Profile.add_updater(update_whitelist_udp)
+    
+""" Helpers for profile updating """
+def get_IP_layer(pkt):
+    if pkt.haslayer("IP"):
+        return pkt.getlayer("IP")
+    elif pkt.haslayer("IPv6"):
+        return pkt.getlayer("IPv6")
+    else:
+        return None
+        
+def check_if_sender(profile, pkt):
+    return profile.mac == pkt.getlayer("Ether").src
+    
+def find_whitelist_entry(profile, pkt, domain):
+    macp = pkt.getlayer("Ether")
+    ipp = get_IP_layer(pkt)
+    is_sender = check_if_sender(profile, pkt)
+    mac = macp.src if is_sender else macp.dst
+    ip = ipp.src if is_sender else ipp.dst
+    data = profile.get('sender') if is_sender else profile.get('receiver')
+    wlists = data.get("whitelist")
+    # More recent entries are more likely to be at the end of the list.
+    for i, wlist in reversed(list(enumerate(wlists))):
+        if wlist.get('mac') == mac or ip in wlist.get('ip', []) or
+           domain in wlist.get('domain', []):
+            return wlist
+    # Entry not found yet, so create it.
+    wlists.append({"mac": mac, "ip": [], "domain": [], protocols: {}})
+    return wlists[:-1]
     
 """ Handle data that is supposed to be stored """
-def update_whitelist(profile, packet):
-    is_sender = profile.mac == packet.getlayer("Ether").src
-    if packet.haslayer("IP"):
-        if is_sender:
-            ip = packet.getlayer("IP").dst
-        else:
-            ip = packet.getlayer("IP").src
-        whitelist = profile.get("ip_whitelist", [])
-        if ip not in whitelist:
-            whitelist.append(ip)
-        profile.set("ip_whitelist", whitelist)
+def update_whitelist_ip(profile, pkt):
+    ipp = get_IP_layer(pkt)
+    if ipp is not None:
+        ip = ipp.dst if check_if_sender(profile, pkt) else ipp.src
+        wlist, found = find_whitelist_entry(profile, pkt, None)
+        if ip not in whitelist.get("ip", []):
+            whitelist["ip"].append(ip)
+            
+def update_whitelist_tcp(profile, pkt):
+    if pkt.haslayer("TCP"):
+        tcpp = pkt.getlayer("TCP")
+        update_whitelist_layer4(profile, pkt, tcpp, "tcp")
+        
+def update_whitelist_udp(profile, pkt):
+    if pkt.haslayer("UDP"):
+        udpp = pkt.getlayer("UDP")
+        update_whitelist_layer4(profile, pkt, udpp, "udp")
+            
+def update_whitelist_layer4(profile, pkt, layer, proto):
+    port = layer.dport if check_if_sender(profile, pkt) else layer.sport
+    wlist = find_whitelist_entry(profile, pkt)
+    protocols = wlist.get("protocols")
+    if protocols.get(proto) is None:
+        protocols[proto] = {}
+    if protocols[proto].get(port) is None:
+        protocols[proto][port] = {"msgs": 0, "min_size": sys.max_size,
+                                  "max_size": 0, "total_size": 0}
+    data = protocols[proto][port]
+    data["msgs"] += 1
+    packet_len = len(layer.load)
+    data["min_size"] = min(data["min_size"], packet_len)
+    data["max_size"] = max(data["max_size"], packet_len)
+    data["total_size"] += packet_len
+    
 
 """ Handle data that is supposed to be checked """
 

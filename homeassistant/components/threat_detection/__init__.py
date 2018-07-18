@@ -283,7 +283,7 @@ def find_whitelist_entry(profile, pkt, domain=None):
             return wlist
     # Entry not found yet, so create it.
     wlists.append({"mac": mac, "ip": [], "domain": [], "protocols": {}})
-    return wlists[:-1]
+    return wlists[-1]
     
 """ Handle data that is supposed to be stored """
 def update_whitelist_ip(profile, pkt):

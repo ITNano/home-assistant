@@ -330,7 +330,9 @@ def update_whitelist_dns(profile, pkt):
     if pkt.haslayer("DNS"):
         is_sender = check_if_sender(profile, pkt)
         if is_sender:
+            _LOGGER.info("Handling DNS packet")
             dnsp = pkt.getlayer("DNS")
+            _LOGGER.info("AN count: " + str(dnsp.ancount))
             if dnsp.ancount > 0:
                 records = [pkt.getlayer("DNSRR")[i] for i in range(dnsp.ancount)]
                 domain = records[0].rdata

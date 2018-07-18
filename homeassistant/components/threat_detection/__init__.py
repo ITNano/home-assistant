@@ -331,22 +331,23 @@ def update_whitelist_dns(profile, pkt):
         is_sender = check_if_sender(profile, pkt)
         if is_sender:
             dnsp = pkt.getlayer("DNS")
-            records = [pkt.getlayer("DNSRR")[i] for i in range(dnsp.ancount)]
-            domain = records[0].rdata
-            ips = [r.rdata for r in records[1:]]
-            wlists = profile.get("send").get("whitelist")
-            entries = [wlist for wlist in wlists if ip in wlist.get("ip")
-                             for ip in ips]
-            if len(entries) < 2:
-                if len(entries)==1:
-                    e = entries[0]
+            if dnsp.ancount > 0:
+                records = [pkt.getlayer("DNSRR")[i] for i in range(dnsp.ancount)]
+                domain = records[0].rdata
+                ips = [r.rdata for r in records[1:]]
+                wlists = profile.get("send").get("whitelist")
+                entries = [wlist for wlist in wlists if ip in wlist.get("ip")
+                                 for ip in ips]
+                if len(entries) < 2:
+                    if len(entries)==1:
+                        e = entries[0]
+                    else:
+                        e = default_wlist_entry()
+                        wlists.append(e)
+                    e["domain"].append(domain)
+                    e["ip"].extend([ip for ip in ips if not ip in e["ip"]])
                 else:
-                    e = default_wlist_entry()
-                    wlists.append(e)
-                e["domain"].append(domain)
-                e["ip"].extend([ip for ip in ips if not ip in e["ip"]])
-            else:
-                _LOGGER.warning("Dammit. Found two profiles for same host")
+                    _LOGGER.warning("Dammit. Found two profiles for same host")
                 
 
 """ Handle data that is supposed to be checked """

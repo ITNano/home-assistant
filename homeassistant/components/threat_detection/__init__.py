@@ -315,7 +315,7 @@ def update_whitelist_layer4(profile, pkt, layer, proto):
                                   "max_size": 0, "total_size": 0}
     data = protocols[proto][port]
     data["msgs"] += 1
-    packet_len = len(layer.load)
+    packet_len = len(pkt)
     data["min_size"] = min(data["min_size"], packet_len)
     data["max_size"] = max(data["max_size"], packet_len)
     data["total_size"] += packet_len

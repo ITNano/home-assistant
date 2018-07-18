@@ -278,8 +278,8 @@ def find_whitelist_entry(profile, pkt, domain):
     wlists = data.get("whitelist")
     # More recent entries are more likely to be at the end of the list.
     for i, wlist in reversed(list(enumerate(wlists))):
-        if wlist.get('mac') == mac or ip in wlist.get('ip', []) or
-           domain in wlist.get('domain', []):
+        if (wlist.get('mac') == mac or ip in wlist.get('ip', [])
+            or domain in wlist.get('domain', [])):
             return wlist
     # Entry not found yet, so create it.
     wlists.append({"mac": mac, "ip": [], "domain": [], protocols: {}})

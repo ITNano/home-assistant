@@ -266,7 +266,7 @@ def get_IP_layer(pkt):
 def check_if_sender(profile, pkt):
     return profile.mac == pkt.getlayer("Ether").src
     
-def default_wlist_entry():
+def default_wlist_entry(mac=None):
     return {"mac": mac, "ip": [], "domain": [], "protocols": {}}
     
 def find_whitelist_entry(profile, pkt, add_if_not_found=True, domain=None):
@@ -285,7 +285,7 @@ def find_whitelist_entry(profile, pkt, add_if_not_found=True, domain=None):
             
     # Entry not found yet, so create it.
     if add_if_not_found:
-        wlists.append(default_wlist_entry())
+        wlists.append(default_wlist_entry(mac))
         return wlists[-1]
     
 """ Handle data that is supposed to be stored """

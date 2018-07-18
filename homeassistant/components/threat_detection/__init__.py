@@ -225,7 +225,7 @@ class Profile(object):
     def __init__(self, mac):
         self.mac = mac
         self.profiling_end = datetime.now()+timedelta(days=1)
-        self.profile = {'sender': {whitelist: []}, 'receiver': {whitelist: []}}
+        self.profile = {"sender": {"whitelist": []}, "receiver": {"whitelist": []}}
 
     def is_profiling(self):
         return datetime.now() < self.profiling_end
@@ -282,7 +282,7 @@ def find_whitelist_entry(profile, pkt, domain):
             or domain in wlist.get('domain', [])):
             return wlist
     # Entry not found yet, so create it.
-    wlists.append({"mac": mac, "ip": [], "domain": [], protocols: {}})
+    wlists.append({"mac": mac, "ip": [], "domain": [], "protocols": {}})
     return wlists[:-1]
     
 """ Handle data that is supposed to be stored """

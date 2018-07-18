@@ -268,7 +268,7 @@ def get_IP_layer(pkt):
 def check_if_sender(profile, pkt):
     return profile.mac == pkt.getlayer("Ether").src
     
-def find_whitelist_entry(profile, pkt, domain):
+def find_whitelist_entry(profile, pkt, domain=None):
     macp = pkt.getlayer("Ether")
     ipp = get_IP_layer(pkt)
     is_sender = check_if_sender(profile, pkt)
@@ -290,7 +290,7 @@ def update_whitelist_ip(profile, pkt):
     ipp = get_IP_layer(pkt)
     if ipp is not None:
         ip = ipp.dst if check_if_sender(profile, pkt) else ipp.src
-        wlist = find_whitelist_entry(profile, pkt, None)
+        wlist = find_whitelist_entry(profile, pkt)
         if ip not in wlist.get("ip"):
             wlist["ip"].append(ip)
             

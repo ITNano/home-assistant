@@ -290,9 +290,9 @@ def update_whitelist_ip(profile, pkt):
     ipp = get_IP_layer(pkt)
     if ipp is not None:
         ip = ipp.dst if check_if_sender(profile, pkt) else ipp.src
-        wlist, found = find_whitelist_entry(profile, pkt, None)
-        if ip not in whitelist.get("ip", []):
-            whitelist["ip"].append(ip)
+        wlist = find_whitelist_entry(profile, pkt, None)
+        if ip not in wlist.get("ip"):
+            wlist["ip"].append(ip)
             
 def update_whitelist_tcp(profile, pkt):
     if pkt.haslayer("TCP"):

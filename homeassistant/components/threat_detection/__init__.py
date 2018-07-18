@@ -21,15 +21,15 @@ from homeassistant.helpers.entity_component import EntityComponent
 
 _LOGGER = logging.getLogger(__name__)
 
-DOMAIN = 'threat_detection'
+DOMAIN = "threat_detection"
 
-ENTITIY_ID_FORMAT = DOMAIN + '.[]'
+ENTITIY_ID_FORMAT = DOMAIN + ".[]"
 
 DEPENDENCIES = []
 
 # Configuration input
-CONF_TEXT = 'test'
-DEFAULT_TEXT = 'default'
+CONF_TEXT = "test"
+DEFAULT_TEXT = "default"
 DEFAULT_DETECTIONS = 0
 # Here we need to add everything that is required from the conf-file if we need
 # some input from the user.
@@ -41,16 +41,16 @@ CONFIG_SCHEMA = vol.Schema({
 
 CAPTURER = None
 PROFILES = {}
-IGNORE_LIST = ['ff:ff:ff:ff:ff:ff', '2c:4d:54:75:05:10']
-STORAGE_NAME = 'td_profiles.yaml'
+IGNORE_LIST = ["ff:ff:ff:ff:ff:ff", "2c:4d:54:75:05:10"]
+STORAGE_NAME = "td_profiles.yaml"
 
 
 @asyncio.coroutine
 def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     # This seems to be a thing. I don't know what it does. May have to do with
-    # getting things to and from dependent
-    # platforms? It seems to break our stuff.
+    # getting things to and from dependent platforms? 
+    # It seems to break our stuff.
     component = EntityComponent(_LOGGER, DOMAIN, hass)
 
     yield from component.async_setup(config)
@@ -58,8 +58,8 @@ def async_setup(hass, config=None):
     userinput = config[DOMAIN].get(CONF_TEXT, DEFAULT_TEXT)
 
     hass.states.async_set(
-        'threat_detection.Threats_Detected', DEFAULT_DETECTIONS)
-    hass.states.async_set('threat_detection.Input', userinput)
+        "threat_detection.Threats_Detected", DEFAULT_DETECTIONS)
+    hass.states.async_set("threat_detection.Input", userinput)
     
     # Start capturing packets from network
     global CAPTURER
@@ -71,7 +71,7 @@ def async_setup(hass, config=None):
     def save_profiles(event):
         store_profiles(join(hass.config.config_dir, STORAGE_NAME))
     hass.bus.async_listen(const.EVENT_HOMEASSISTANT_STOP, save_profiles)
-    hass.bus.async_listen('trigger_profile_save', save_profiles)
+    hass.bus.async_listen("trigger_profile_save", save_profiles)
 
     _LOGGER.info("The threat_detection component is set up!")
 
@@ -158,7 +158,7 @@ class PacketCapturer:
         def file_filter(self, ignore_file):
             """Filter to select .pcap files and ignore the given file """
             def f_filter(f):
-                return f.endswith('.pcap') and f != basename(ignore_file)
+                return f.endswith(".pcap") and f != basename(ignore_file)
             return f_filter
 
             
@@ -166,12 +166,12 @@ class PacketCapturer:
 """ Handling of profiling """
 def load_profiles(filename):
     try:
-        with open(filename, 'r') as infile:
+        with open(filename, "r") as infile:
             indata = yaml.load(infile)
         for mac, prof in indata.items():
             if assure_profile_exists(mac):
-                PROFILES[mac].profiling_end = prof['prof_end']
-                PROFILES[mac].profile = prof['prof']
+                PROFILES[mac].profiling_end = prof["prof_end"]
+                PROFILES[mac].profile = prof["prof"]
     except FileNotFoundError:
         # Will happen on first run due to no previous save file. 
         pass
@@ -179,9 +179,9 @@ def load_profiles(filename):
 def store_profiles(filename):
     outdata = {}
     for mac, prof in PROFILES.items():
-        outdata[mac] = {'prof_end': prof.profiling_end, 'prof': prof.profile}
+        outdata[mac] = {"prof_end": prof.profiling_end, "prof": prof.profile}
     _LOGGER.info(outdata)
-    with open(filename, 'w') as outfile:
+    with open(filename, "w") as outfile:
         yaml.dump(outdata, outfile, default_flow_style=False)
 
 def assure_profile_exists(mac):
@@ -274,12 +274,12 @@ def find_whitelist_entry(profile, pkt, domain):
     is_sender = check_if_sender(profile, pkt)
     mac = macp.src if is_sender else macp.dst
     ip = ipp.src if is_sender else ipp.dst
-    data = profile.get('sender') if is_sender else profile.get('receiver')
+    data = profile.get("sender") if is_sender else profile.get("receiver")
     wlists = data.get("whitelist")
     # More recent entries are more likely to be at the end of the list.
     for i, wlist in reversed(list(enumerate(wlists))):
-        if (wlist.get('mac') == mac or ip in wlist.get('ip', [])
-            or domain in wlist.get('domain', [])):
+        if (wlist.get("mac") == mac or ip in wlist.get("ip", [])
+            or domain in wlist.get("domain", [])):
             return wlist
     # Entry not found yet, so create it.
     wlists.append({"mac": mac, "ip": [], "domain": [], "protocols": {}})

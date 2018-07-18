@@ -225,7 +225,7 @@ class Profile(object):
     def __init__(self, mac):
         self.mac = mac
         self.profiling_end = datetime.now()+timedelta(days=1)
-        self.profile = {"sender": {"whitelist": []}, "receiver": {"whitelist": []}}
+        self.profile = {"send": {"whitelist": []}, "receive": {"whitelist": []}}
 
     def is_profiling(self):
         return datetime.now() < self.profiling_end
@@ -272,9 +272,9 @@ def find_whitelist_entry(profile, pkt, domain=None):
     macp = pkt.getlayer("Ether")
     ipp = get_IP_layer(pkt)
     is_sender = check_if_sender(profile, pkt)
-    mac = macp.src if is_sender else macp.dst
-    ip = ipp.src if is_sender else ipp.dst
-    data = profile.get("sender") if is_sender else profile.get("receiver")
+    mac = macp.dst if is_sender else macp.src
+    ip = ipp.dst if is_sender else ipp.src
+    data = profile.get("send") if is_sender else profile.get("receive")
     wlists = data.get("whitelist")
     # More recent entries are more likely to be at the end of the list.
     for i, wlist in reversed(list(enumerate(wlists))):

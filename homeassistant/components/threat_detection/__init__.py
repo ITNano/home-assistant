@@ -311,7 +311,7 @@ def update_whitelist_layer4(profile, pkt, layer, proto):
     if protocols.get(proto) is None:
         protocols[proto] = {}
     if protocols[proto].get(port) is None:
-        protocols[proto][port] = {"msgs": 0, "min_size": sys.max_size,
+        protocols[proto][port] = {"msgs": 0, "min_size": sys.maxsize,
                                   "max_size": 0, "total_size": 0}
     data = protocols[proto][port]
     data["msgs"] += 1

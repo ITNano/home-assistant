@@ -252,6 +252,7 @@ def add_profile_callbacks():
     Profile.add_updater(update_whitelist_ip)
     Profile.add_updater(update_whitelist_tcp)
     Profile.add_updater(update_whitelist_udp)
+    Profile.add_updater(update_whitelist_dns)
     
 """ Helpers for profile updating """
 def get_IP_layer(pkt):

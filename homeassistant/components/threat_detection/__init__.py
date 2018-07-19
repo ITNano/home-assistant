@@ -299,7 +299,7 @@ def update_whitelist_ip(profile, pkt):
         if ip not in wlist.get("ip"):
             wlist["ip"].append(ip)
         if is_sender and ip not in profile.get("ip"):
-            profile.get("ip").append(ip)
+            profile.get("ip").append(ipp.src)
             
 def update_whitelist_tcp(profile, pkt):
     if pkt.haslayer("TCP"):

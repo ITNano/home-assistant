@@ -151,9 +151,10 @@ class PacketCapturer:
                 # Remove read files so data are only read once
                 for file in files:
                     os.remove(join(path, file))
+                # Allow new files to be read
+                self.lock.release()
                 # Notify the user of the found data
                 self.callback(PacketList([pkt for pkts in data for pkt in pkts]))
-                self.lock.release()
                 
         def file_filter(self, ignore_file):
             """Filter to select .pcap files and ignore the given file """

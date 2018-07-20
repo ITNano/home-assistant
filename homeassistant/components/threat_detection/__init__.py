@@ -157,8 +157,7 @@ class PacketCapturer:
                 data = [safe_exc(rdpcap, [], join(path, file)) for file in files]
                 # Remove read files so data are only read once
                 for file in files:
-                    # os.remove(join(path, file))
-                    os.rename(join(path, file), join(path, "debug", file))
+                    os.remove(join(path, file))
                 # Allow new files to be read
                 self.lock.release()
                 # Notify the user of the found data

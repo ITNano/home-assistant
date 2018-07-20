@@ -31,22 +31,18 @@ DEPENDENCIES = []
 CONF_TEXT = "test"
 DEFAULT_TEXT = "default"
 DEFAULT_DETECTIONS = 0
-CONF_ROUTER_MAC = "router_mac"
-CONF_SUBNET_RANGE = "subnet_range"
-DEFAULT_SUBNET_RANGE = "192.168.1.0/24"
 # Here we need to add everything that is required from the conf-file if we need
 # some input from the user.
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Required(CONF_TEXT, default=DEFAULT_TEXT): cv.string,
-        vol.Required(CONF_ROUTER_MAC): cv.string,
-        vol.Required(CONF_SUBNET_RANGE, default=DEFAULT_SUBNET_RANGE): cv.string,
     })
 }, extra=vol.ALLOW_EXTRA)
 
 CAPTURER = None
 PROFILES = {}
-IGNORE_LIST = ["ff:ff:ff:ff:ff:ff", "2c:4d:54:75:05:10"]
+IGNORE_LIST = ["ff:ff:ff:ff:ff:ff"] + get_gateway_macs()
+SUBNETS = get_subnets()
 STORAGE_NAME = "td_profiles.yaml"
 
 
@@ -62,10 +58,8 @@ def async_setup(hass, config=None):
 
     userinput = config[DOMAIN].get(CONF_TEXT, DEFAULT_TEXT)
     
-    router_mac = config[DOMAIN].get(CONF_ROUTER_MAC)
-    subnet = config[DOMAIN].get(CONF_SUBNET_RANGE, DEFAULT_SUBNET_RANGE)
-    _LOGGER.info("Using router mac: "+router_mac)
-    _LOGGER.info("Using subnet: "+subnet)
+    _LOGGER.info("Using ignore list: "+IGNORE_LIST)
+    _LOGGER.info("Using subnet: "+SUBNETS)
 
     hass.states.async_set(
         "threat_detection.Threats_Detected", DEFAULT_DETECTIONS)
@@ -171,6 +165,29 @@ class PacketCapturer:
             def f_filter(f):
                 return f.endswith(".pcap") and f != basename(ignore_file)
             return f_filter
+            
+""" Get network properties """
+def get_gateway_macs():
+    cmd = (" ip neigh | grep \"$(ip route list | grep default | cut -d\  -f3"
+           " | uniq) \" | cut -d\  -f5 | uniq ")
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    (output, err) = p.communicate()
+    if not err:
+        return output.splitlines()
+
+def get_subnets():
+    cmd = "ifconfig | grep netmask | awk '{print $2 \" \" $4}'"
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    (output, err) = p.communicate()
+    if not err:
+        subnets = [get_subnet(*line.split()) for line in output.splitlines()]
+        return [s for i, s in enumerate(subnets) if not s in subnets[i+1:]]
+
+def get_subnet(ip, netmask):
+    parts = zip(ip.split("."), netmask.split("."))
+    base_ip = [str(int(ip_addr) & int(nm)) for ip_addr, nm in parts]
+    numeric_netmask = [int(nm) for nm in netmask.split(".")]
+    return (".".join(base_ip), numeric_netmask)
 
             
 

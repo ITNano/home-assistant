@@ -8,6 +8,7 @@ todo add where to find documontation for the component.
 import sys
 import time
 import os
+import subprocess
 from os.path import dirname, basename, isfile, join
 from datetime import datetime, timedelta
 from threading import Lock

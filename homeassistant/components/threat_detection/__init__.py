@@ -43,7 +43,7 @@ CONFIG_SCHEMA = vol.Schema({
 CAPTURER = None
 PROFILES = {}
 IGNORE_LIST = ["ff:ff:ff:ff:ff:ff"] + get_gateway_macs()
-SUBNETS = get_subnets()
+SUBNETS = []
 STORAGE_NAME = "td_profiles.yaml"
 
 
@@ -59,6 +59,8 @@ def async_setup(hass, config=None):
 
     userinput = config[DOMAIN].get(CONF_TEXT, DEFAULT_TEXT)
     
+    IGNORE_LIST.extend(get_gateway_macs())
+    SUBNETS.extend(get_subnets())
     _LOGGER.info("Using ignore list: "+IGNORE_LIST)
     _LOGGER.info("Using subnet: "+SUBNETS)
 

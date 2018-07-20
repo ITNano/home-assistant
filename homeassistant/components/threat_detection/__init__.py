@@ -31,11 +31,16 @@ DEPENDENCIES = []
 CONF_TEXT = "test"
 DEFAULT_TEXT = "default"
 DEFAULT_DETECTIONS = 0
+CONF_ROUTER_MAC = "router_mac"
+CONF_SUBNET_RANGE = "subnet_range"
+DEFAULT_SUBNET_RANGE = "192.168.1.0/24"
 # Here we need to add everything that is required from the conf-file if we need
 # some input from the user.
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Required(CONF_TEXT, default=DEFAULT_TEXT): cv.string,
+        vol.Required(CONF_ROUTER_MAC): cv.string,
+        vol.Required(CONF_SUBNET_RANGE, default=DEFAULT_SUBNET_RANGE): cv.string,
     })
 }, extra=vol.ALLOW_EXTRA)
 
@@ -56,6 +61,11 @@ def async_setup(hass, config=None):
     yield from component.async_setup(config)
 
     userinput = config[DOMAIN].get(CONF_TEXT, DEFAULT_TEXT)
+    
+    router_mac = config[DOMAIN].get(CONF_ROUTER_MAC)
+    subnet = config[DOMAIN].get(CONF_SUBNET_RANGE, DEFAULT_SUBNET_RANGE)
+    _LOGGER.info("Using router mac: "+router_mac)
+    _LOGGER.info("Using subnet: "+subnet)
 
     hass.states.async_set(
         "threat_detection.Threats_Detected", DEFAULT_DETECTIONS)

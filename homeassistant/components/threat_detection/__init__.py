@@ -170,9 +170,9 @@ class PacketCapturer:
 
 def pcap_filter(ignore_file):
     """Create filter to use for PacketCaptureHandler """
-    def filter_func(ign_file, file):
+    def filter_func(file):
         """Filter to select .pcap files and ignore the given file """
-        return file.endswith('.pcap') and file != basename(ign_file)
+        return file.endswith('.pcap') and file != basename(ignore_file)
     return filter_func
 
 

@@ -374,19 +374,22 @@ def update_whitelist_dns(profile, pkt):
         _LOGGER.info("Handling DNS packet: " + dnsp.summary())
         if not is_sender:
             if dnsp.ancount > 0:
+                _LOGGER.info("ACTUALLY DOING STUFFS")
                 records = [pkt.getlayer("DNSRR")[i] for i in range(dnsp.ancount)]
-                domain = records[0].rdata
-                ips = [r.rdata for r in records[1:]]
+                domains = [r.rrname for r in records]
+                ips = [r.rdata for r in records]
                 wlists = profile.get("send").get("whitelist")
                 entries = [wlist for wlist in wlists if ip in wlist.get("ip")
-                                 for ip in ips]
+                                             or domain in wlist.get("domain")
+                                 for ip, domain in zip(ips, domains)]
                 if len(entries) < 2:
                     if len(entries)==1:
                         e = entries[0]
                     else:
                         e = default_wlist_entry()
                         wlists.append(e)
-                    e["domain"].append(domain)
+                    uniq_domain = [d for d in domains if not d in e["domain"]]
+                    e["domain"].extend(uniq_domain)
                     e["ip"].extend([ip for ip in ips if not ip in e["ip"]])
                 else:
                     _LOGGER.warning("Dammit. Found two profiles for same host")

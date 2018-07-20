@@ -379,9 +379,9 @@ def update_whitelist_dns(profile, pkt):
                 domains = [r.rrname for r in records]
                 ips = [r.rdata for r in records]
                 wlists = profile.get("send").get("whitelist")
-                entries = [wlist for wlist in wlists if ip in wlist.get("ip")
-                                             or domain in wlist.get("domain")
-                                 for ip, domain in zip(ips, domains)]
+                entries = [wlist for wlist in wlists if (ip in wlist.get("ip")
+                           or domain in wlist.get("domain"))
+                           for ip, domain in zip(ips, domains)]
                 if len(entries) < 2:
                     if len(entries)==1:
                         e = entries[0]

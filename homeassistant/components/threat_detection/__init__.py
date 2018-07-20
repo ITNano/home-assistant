@@ -169,7 +169,7 @@ class PacketCapturer:
                 return f.endswith(".pcap") and f != basename(ignore_file)
             return f_filter
             
-""" Get network properties """
+""" Handling internal/external networks """
 def get_gateway_macs():
     cmd = (" ip neigh | grep \"$(ip route list | grep default | cut -d\  -f3"
            " | uniq) \" | cut -d\  -f5 | uniq ")
@@ -184,14 +184,21 @@ def get_subnets():
     (output, err) = p.communicate()
     if not err:
         output = output.decode()
-        subnets = [get_subnet(*line.split()) for line in output.splitlines()]
+        subnets = [find_subnet(*line.split()) for line in output.splitlines()]
         return [s for i, s in enumerate(subnets) if not s in subnets[i+1:]]
 
-def get_subnet(ip, netmask):
-    parts = zip(ip.split("."), netmask.split("."))
-    base_ip = [int(ip_addr) & int(nm) for ip_addr, nm in parts]
+def find_subnet(ip, netmask):
     numeric_netmask = [int(nm) for nm in netmask.split(".")]
-    return (base_ip, numeric_netmask)
+    return get_subnet(ip, numeric_netmask)
+
+def get_subnet(ip, netmask):
+    parts = zip(ip.split("."), netmask)
+    base_ip = [int(ip_addr) & nm for ip_addr, nm in parts]
+    return (base_ip, netmask)
+
+def in_network(ip):
+    if ip is not None:
+        return any(get_subnet(ip, nm)[0] == ip2 for ip2, nm in SUBNETS)
 
             
 
@@ -302,16 +309,17 @@ def default_wlist_entry(mac=None):
     return {"mac": mac, "ip": [], "domain": [], "protocols": {}}
     
 def find_whitelist_entry(profile, pkt, add_if_not_found=True, domain=None):
-    macp = pkt.getlayer("Ether")
     is_sender = check_if_sender(profile, pkt)
-    mac = macp.dst if is_sender else macp.src
     ipp = get_IP_layer(pkt)
     ip = None if ipp is None else ipp.dst if is_sender else ipp.src
+    macp = pkt.getlayer("Ether")
+    mac = None if not in_network(ip) else macp.dst if is_sender else macp.src
     data = profile.get("send") if is_sender else profile.get("receive")
     wlists = data.get("whitelist")
     # More recent entries are more likely to be at the end of the list.
     for i, wlist in reversed(list(enumerate(wlists))):
-        if (wlist.get("mac") == mac or ip in wlist.get("ip", [])
+        if ((mac is not None and wlist.get("mac") == mac)
+            or ip in wlist.get("ip", [])
             or domain in wlist.get("domain", [])):
             return wlist
             

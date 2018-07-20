@@ -61,8 +61,8 @@ def async_setup(hass, config=None):
     
     IGNORE_LIST.extend(get_gateway_macs())
     SUBNETS.extend(get_subnets())
-    _LOGGER.info("Using ignore list: "+IGNORE_LIST)
-    _LOGGER.info("Using subnet: "+SUBNETS)
+    _LOGGER.info("Using ignore list: "+str(IGNORE_LIST))
+    _LOGGER.info("Using subnet: "+str(SUBNETS))
 
     hass.states.async_set(
         "threat_detection.Threats_Detected", DEFAULT_DETECTIONS)

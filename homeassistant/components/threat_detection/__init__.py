@@ -369,7 +369,7 @@ def update_whitelist_layer4(profile, pkt, layer, proto):
 def update_whitelist_dns(profile, pkt):
     if pkt.haslayer("DNS"):
         is_sender = check_if_sender(profile, pkt)
-        if is_sender:
+        if not is_sender:
             dnsp = pkt.getlayer("DNS")
             _LOGGER.info("Handling DNS packet: " + dnsp.summary())
             if dnsp.ancount > 0:

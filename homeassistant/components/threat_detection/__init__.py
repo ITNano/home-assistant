@@ -42,7 +42,7 @@ CONFIG_SCHEMA = vol.Schema({
 
 CAPTURER = None
 PROFILES = {}
-IGNORE_LIST = ["ff:ff:ff:ff:ff:ff"] + get_gateway_macs()
+IGNORE_LIST = ["ff:ff:ff:ff:ff:ff"]
 SUBNETS = []
 STORAGE_NAME = "td_profiles.yaml"
 

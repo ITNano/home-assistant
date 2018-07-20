@@ -176,21 +176,22 @@ def get_gateway_macs():
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     (output, err) = p.communicate()
     if not err:
-        return output.splitlines()
+        return output.decode().splitlines()
 
 def get_subnets():
     cmd = "ifconfig | grep netmask | awk '{print $2 \" \" $4}'"
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     (output, err) = p.communicate()
     if not err:
+        output = output.decode()
         subnets = [get_subnet(*line.split()) for line in output.splitlines()]
         return [s for i, s in enumerate(subnets) if not s in subnets[i+1:]]
 
 def get_subnet(ip, netmask):
     parts = zip(ip.split("."), netmask.split("."))
-    base_ip = [str(int(ip_addr) & int(nm)) for ip_addr, nm in parts]
+    base_ip = [int(ip_addr) & int(nm) for ip_addr, nm in parts]
     numeric_netmask = [int(nm) for nm in netmask.split(".")]
-    return (".".join(base_ip), numeric_netmask)
+    return (base_ip, numeric_netmask)
 
             
 

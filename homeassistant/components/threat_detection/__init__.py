@@ -373,9 +373,9 @@ def update_whitelist_dns(profile, pkt):
         _LOGGER.info("Handling DNS packet: " + dnsp.summary())
         if not is_sender:
             if dnsp.ancount > 0:
-                _LOGGER.info("ACTUALLY DOING STUFFS")
-                records = [pkt.getlayer("DNSRR")[i] for i in range(dnsp.ancount)]
-                domains = [r.rrname for r in records]
+                dns_rr = pkt.getlayer("DNSRR")
+                records = [dns_rr[i] for i in range(dnsp.ancount)]
+                domains = [r.rrname.decode() for r in records]
                 ips = [r.rdata for r in records]
                 wlists = profile.get("send").get("whitelist")
                 entries = [wlist for wlist in wlists

@@ -6,6 +6,7 @@ todo add where to find documontation for the component.
 """
 
 import os
+import sys
 import subprocess
 from os.path import dirname, basename, isfile, join
 from datetime import datetime, timedelta
@@ -49,14 +50,14 @@ STORAGE_NAME = "td_profiles.yaml"
 def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     # This seems to be a thing. I don't know what it does. May have to do with
-    # getting things to and from dependent platforms? 
+    # getting things to and from dependent platforms?
     # It seems to break our stuff.
     component = EntityComponent(_LOGGER, DOMAIN, hass)
 
     yield from component.async_setup(config)
 
     userinput = config[DOMAIN].get(CONF_TEXT, DEFAULT_TEXT)
-    
+
     # Set up network properties
     IGNORE_LIST.extend(get_gateway_macs())
     SUBNETS.extend(get_subnets())
@@ -64,7 +65,7 @@ def async_setup(hass, config=None):
     hass.states.async_set(
         "threat_detection.Threats_Detected", DEFAULT_DETECTIONS)
     hass.states.async_set("threat_detection.Input", userinput)
-    
+
     # Start capturing packets from network
     global CAPTURER
     CAPTURER = PacketCapturer(join(hass.config.config_dir, "traces"))
@@ -72,6 +73,7 @@ def async_setup(hass, config=None):
     # Setup profiling
     load_profiles(join(hass.config.config_dir, STORAGE_NAME))
     add_profile_callbacks()
+
     def save_profiles(event):
         store_profiles(join(hass.config.config_dir, STORAGE_NAME))
     hass.bus.async_listen(const.EVENT_HOMEASSISTANT_STOP, save_profiles)
@@ -96,12 +98,11 @@ def on_network_capture(packet_list):
 def safe_exc(func, default, *args):
     try:
         return func(*args)
-    except:
+    except Exception:
         _LOGGER.warning("Caught an exception for Threat Detection.")
         return default
 
 
-""" Handling of network traffic """
 class PacketCapturer:
     """Reads network packet captures and provides a way to register
        callbacks to receive this data """
@@ -172,8 +173,7 @@ def pcap_filter(ignore_file):
         return file.endswith('.pcap') and file != basename(ign_file)
     return filter_func
 
-            
-""" Handling internal/external networks """
+
 def get_gateway_macs():
     cmd = (" ip neigh | grep \"$(ip route list | grep default | cut -d\  -f3"
            " | uniq) \" | cut -d\  -f5 | uniq ")
@@ -182,6 +182,7 @@ def get_gateway_macs():
     if not err:
         return output.decode().splitlines()
 
+
 def get_subnets():
     cmd = "ifconfig | grep netmask | awk '{print $2 \" \" $4}'"
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -189,24 +190,25 @@ def get_subnets():
     if not err:
         output = output.decode()
         subnets = [find_subnet(*line.split()) for line in output.splitlines()]
-        return [s for i, s in enumerate(subnets) if not s in subnets[i+1:]]
+        return [s for i, s in enumerate(subnets) if s not in subnets[i+1:]]
+
 
 def find_subnet(ip, netmask):
     numeric_netmask = [int(nm) for nm in netmask.split(".")]
     return get_subnet(ip, numeric_netmask)
+
 
 def get_subnet(ip, netmask):
     parts = zip(ip.split("."), netmask)
     base_ip = [int(ip_addr) & nm for ip_addr, nm in parts]
     return (base_ip, netmask)
 
+
 def in_network(ip):
     if ip is not None:
         return any(get_subnet(ip, nm)[0] == ip2 for ip2, nm in SUBNETS)
 
-            
 
-""" Handling of profiling """
 def load_profiles(filename):
     try:
         with open(filename, "r") as infile:
@@ -216,8 +218,9 @@ def load_profiles(filename):
                 PROFILES[mac].profiling_end = prof["prof_end"]
                 PROFILES[mac].profile = prof["prof"]
     except FileNotFoundError:
-        # Will happen on first run due to no previous save file. 
+        # Will happen on first run due to no previous save file.
         pass
+
 
 def store_profiles(filename):
     outdata = {}
@@ -226,13 +229,15 @@ def store_profiles(filename):
     with open(filename, "w") as outfile:
         yaml.dump(outdata, outfile, default_flow_style=False)
 
+
 def assure_profile_exists(mac):
-    if not mac in IGNORE_LIST:
+    if mac not in IGNORE_LIST:
         if PROFILES.get(mac) is None:
             PROFILES[mac] = Profile(mac)
         return True
     else:
         return False
+
 
 def transfer_data_to_profile(packets):
     for packet in packets:
@@ -241,6 +246,7 @@ def transfer_data_to_profile(packets):
             feed_profile_data(packet.getlayer("Ether").dst, packet)
         else:
             _LOGGER.debug("Unknown packet: "+packet.summary())
+
 
 def feed_profile_data(mac, packet):
     if assure_profile_exists(mac):
@@ -267,7 +273,8 @@ class Profile(object):
     def __init__(self, mac):
         self.mac = mac
         self.profiling_end = datetime.now()+timedelta(days=1)
-        self.profile = {"ip": [], "send": {"whitelist": []}, "receive": {"whitelist": []}}
+        self.profile = {"ip": [], "send": {"whitelist": []},
+                                  "recv": {"whitelist": []}}
 
     def is_profiling(self):
         return datetime.now() < self.profiling_end
@@ -288,15 +295,15 @@ class Profile(object):
 
     def get(self, key, default_val=None):
         return self.profile.get(key, default_val)
-        
-        
+
+
 def add_profile_callbacks():
     Profile.add_updater(update_whitelist_ip)
     Profile.add_updater(update_whitelist_tcp)
     Profile.add_updater(update_whitelist_udp)
     Profile.add_updater(update_whitelist_dns)
-    
-""" Helpers for profile updating """
+
+
 def get_IP_layer(pkt):
     if pkt.haslayer("IP"):
         return pkt.getlayer("IP")
@@ -304,34 +311,36 @@ def get_IP_layer(pkt):
         return pkt.getlayer("IPv6")
     else:
         return None
-        
+
+
 def check_if_sender(profile, pkt):
     return profile.mac == pkt.getlayer("Ether").src
-    
+
+
 def default_wlist_entry(mac=None):
     return {"mac": mac, "ip": [], "domain": [], "protocols": {}}
-    
+
+
 def find_whitelist_entry(profile, pkt, add_if_not_found=True, domain=None):
     is_sender = check_if_sender(profile, pkt)
     ipp = get_IP_layer(pkt)
     ip = None if ipp is None else ipp.dst if is_sender else ipp.src
     macp = pkt.getlayer("Ether")
     mac = None if not in_network(ip) else macp.dst if is_sender else macp.src
-    data = profile.get("send") if is_sender else profile.get("receive")
+    data = profile.get("send") if is_sender else profile.get("recv")
     wlists = data.get("whitelist")
     # More recent entries are more likely to be at the end of the list.
     for i, wlist in reversed(list(enumerate(wlists))):
         if ((mac is not None and wlist.get("mac") == mac)
-            or ip in wlist.get("ip", [])
-            or domain in wlist.get("domain", [])):
+                or ip in wlist.get("ip") or domain in wlist.get("domain")):
             return wlist
-            
+
     # Entry not found yet, so create it.
     if add_if_not_found:
         wlists.append(default_wlist_entry(mac))
         return wlists[-1]
-    
-""" Handle data that is supposed to be stored """
+
+
 def update_whitelist_ip(profile, pkt):
     ipp = get_IP_layer(pkt)
     if ipp is not None:
@@ -342,17 +351,20 @@ def update_whitelist_ip(profile, pkt):
             wlist["ip"].append(ip)
         if is_sender and ipp.src not in profile.get("ip"):
             profile.get("ip").append(ipp.src)
-            
+
+
 def update_whitelist_tcp(profile, pkt):
     if pkt.haslayer("TCP"):
         tcpp = pkt.getlayer("TCP")
         update_whitelist_layer4(profile, pkt, tcpp, "tcp")
-        
+
+
 def update_whitelist_udp(profile, pkt):
     if pkt.haslayer("UDP"):
         udpp = pkt.getlayer("UDP")
         update_whitelist_layer4(profile, pkt, udpp, "udp")
-            
+
+
 def update_whitelist_layer4(profile, pkt, layer, proto):
     port = layer.dport if check_if_sender(profile, pkt) else layer.sport
     wlist = find_whitelist_entry(profile, pkt)
@@ -368,7 +380,8 @@ def update_whitelist_layer4(profile, pkt, layer, proto):
     data["min_size"] = min(data["min_size"], packet_len)
     data["max_size"] = max(data["max_size"], packet_len)
     data["total_size"] += packet_len
-    
+
+
 def update_whitelist_dns(profile, pkt):
     if pkt.haslayer("DNS"):
         is_sender = check_if_sender(profile, pkt)
@@ -383,20 +396,18 @@ def update_whitelist_dns(profile, pkt):
                 entries = [wlist for wlist in wlists
                            for ip, domain in zip(ips, domains)
                            if (ip in wlist.get("ip")
-                           or domain in wlist.get("domain")) ]
+                               or domain in wlist.get("domain"))]
                 if len(entries) < 2:
-                    if len(entries)==1:
+                    if len(entries) == 1:
                         e = entries[0]
                     else:
                         e = default_wlist_entry()
                         wlists.append(e)
-                    uniq_domain = [d for d in domains if not d in e["domain"]]
+                    uniq_domain = [d for d in domains if d not in e["domain"]]
                     e["domain"].extend(uniq_domain)
-                    e["ip"].extend([ip for ip in ips if not ip in e["ip"]])
+                    e["ip"].extend([ip for ip in ips if ip not in e["ip"]])
                 else:
                     _LOGGER.warning("Dammit. Found two profiles for same host")
-                
+
 
 """ Handle data that is supposed to be checked """
-
-""" END """

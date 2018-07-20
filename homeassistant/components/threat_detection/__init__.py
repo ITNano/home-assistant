@@ -59,10 +59,9 @@ def async_setup(hass, config=None):
 
     userinput = config[DOMAIN].get(CONF_TEXT, DEFAULT_TEXT)
     
+    # Set up network properties
     IGNORE_LIST.extend(get_gateway_macs())
     SUBNETS.extend(get_subnets())
-    _LOGGER.info("Using ignore list: "+str(IGNORE_LIST))
-    _LOGGER.info("Using subnet: "+str(SUBNETS))
 
     hass.states.async_set(
         "threat_detection.Threats_Detected", DEFAULT_DETECTIONS)
@@ -219,7 +218,6 @@ def store_profiles(filename):
     outdata = {}
     for mac, prof in PROFILES.items():
         outdata[mac] = {"prof_end": prof.profiling_end, "prof": prof.profile}
-    _LOGGER.info(outdata)
     with open(filename, "w") as outfile:
         yaml.dump(outdata, outfile, default_flow_style=False)
 
@@ -370,7 +368,6 @@ def update_whitelist_dns(profile, pkt):
     if pkt.haslayer("DNS"):
         is_sender = check_if_sender(profile, pkt)
         dnsp = pkt.getlayer("DNS")
-        _LOGGER.info("Handling DNS packet: " + dnsp.summary())
         if not is_sender:
             if dnsp.ancount > 0:
                 dns_rr = pkt.getlayer("DNSRR")

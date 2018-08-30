@@ -17,6 +17,7 @@ import yaml
 import voluptuous as vol
 import homeassistant.const as const
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import EntityComponent
 
 _LOGGER = logging.getLogger(__name__)
@@ -43,6 +44,7 @@ CAPTURER = None
 PROFILES = {}
 IGNORE_LIST = ["ff:ff:ff:ff:ff:ff"]
 SUBNETS = []
+DETECTION_OBJ = None
 STORAGE_NAME = "td_profiles.yaml"
 
 
@@ -80,9 +82,57 @@ def async_setup(hass, config=None):
     hass.bus.async_listen(const.EVENT_HOMEASSISTANT_STOP, save_profiles)
     hass.bus.async_listen("trigger_profile_save", save_profiles)
 
+    DETECTION_OBJ = ThreatDetection(hass, "td_obj", "Threat Detection", "mdi:security-close")
+    await component.async_add_entities([DETECTION_OBJ])
+
     _LOGGER.info("The threat_detection component is set up!")
 
     return True
+
+
+class ThreatDetection(Entity):
+    """ Representation of threat detection state """
+
+    def __init__(self, hass, obj_id, name, icon):
+        self.entity_id = ENTITIY_ID_FORMAT.format(obj_id)
+        self._hass = hass
+        self._name = name
+        self._icon = icon
+        self._threats = []
+
+    @property
+    def should_poll(self):
+        """If entity should be polled."""
+        return True
+
+    @property
+    def name(self):
+        """Return name of this module."""
+        return this._name
+
+    @property
+    def icon(self):
+        """Return the icon to be used for this entity."""
+        return self._icon
+
+    @property
+    def state(self):
+        """Return the current state (nbr of detections)."""
+        return len(threats)
+
+    @property
+    def state_attributes(self):
+        """Return the state attributes."""
+        return {}
+
+    def add_threats(self, threats):
+        """Adds newly found threats."""
+        if isinstance(threats, list):
+            self._threats.extend(threats)
+        elif isinstance(threats, str):
+            self._threats.append(threats)
+        else:
+            self._threats.append(str(threats))
 
 
 def on_network_capture(packet_list):
@@ -274,6 +324,7 @@ def feed_profile_data(mac, packet):
         response = PROFILES[mac].handle_packet(packet)
         if response is not None:
             _LOGGER.warning("THREAT WARNING: %s", str(response))
+            DETECTION_OBJ.add_threats(response)
 
 
 class Profile(object):

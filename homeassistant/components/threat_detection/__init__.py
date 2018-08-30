@@ -105,6 +105,8 @@ def safe_exc(func, default, *args):
         return default
 
 
+# ------------------------------- NETWORK ----------------------------- #
+
 class PacketCapturer:
     """Reads network packet captures and provides a way to register
        callbacks to receive this data """
@@ -217,6 +219,9 @@ def in_network(ip_addr):
     if ip_addr is not None:
         return any(get_subnet(ip_addr, nm)[0] == ip2 for ip2, nm in SUBNETS)
 
+
+
+# ------------------------------- PROFILES ----------------------------- #
 
 def load_profiles(filename):
     """Loads device profiles from te given yaml file"""
@@ -335,6 +340,7 @@ def add_profile_callbacks():
     Profile.add_updater(update_whitelist_udp)
     Profile.add_updater(update_whitelist_dns)
 
+# ----------------------------- PACKET UTILS -------------------------- #
 
 def get_ip_layer(pkt):
     """Retrieves the IP layer of a packet, whether it is IPv4 or IPv6. If
@@ -377,6 +383,8 @@ def find_whitelist_entry(profile, pkt, add_if_not_found=True, domain=None):
         wlists.append(default_wlist_entry(mac))
         return wlists[-1]
 
+
+# --------------------------- MAINTAIN PROFILE ------------------------- #
 
 def update_whitelist_ip(profile, pkt):
     """Updates profile based on the IP layer"""

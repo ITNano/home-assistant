@@ -49,15 +49,14 @@ STORAGE_NAME = "td_profiles.yaml"
 
 
 @asyncio.coroutine
-async def async_setup(hass, config=None):
+def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     # This seems to be a thing. I don't know what it does. May have to do with
     # getting things to and from dependent platforms?
     # It seems to break our stuff.
     component = EntityComponent(_LOGGER, DOMAIN, hass)
 
-    async for x in component.async_setup(config):
-        yield x
+    yield from component.async_setup(config)
 
     userinput = config[DOMAIN].get(CONF_TEXT, DEFAULT_TEXT)
 
@@ -84,7 +83,7 @@ async def async_setup(hass, config=None):
     hass.bus.async_listen("trigger_profile_save", save_profiles)
 
     DETECTION_OBJ = ThreatDetection(hass, "td_obj", "Threat Detection", "mdi:security-close")
-    await component.async_add_entities([DETECTION_OBJ])
+    component.async_add_entities([DETECTION_OBJ])       # Might require await call.
 
     _LOGGER.info("The threat_detection component is set up!")
 

@@ -486,4 +486,4 @@ def check_ddos_layer4(profile, pkt, layer, proto):
         ip = get_ip_address(profile, pkt)
         return ("A device is doing unexpected network calls. This might "
                "be an indication that the device has been compromised.\n"
-               "Additional information: " + proto + " " + ip + ":" + port)
+               "Additional information: %s %s:%i") % (proto, ip, port)

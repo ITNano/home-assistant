@@ -339,6 +339,9 @@ def add_profile_callbacks():
     Profile.add_updater(update_whitelist_tcp)
     Profile.add_updater(update_whitelist_udp)
     Profile.add_updater(update_whitelist_dns)
+    Profile.add_checker(check_ddos_tcp)
+    Profile.add_checker(check_ddos_udp)
+
 
 # ----------------------------- PACKET UTILS -------------------------- #
 
@@ -350,6 +353,10 @@ def get_ip_layer(pkt):
     elif pkt.haslayer("IPv6"):
         return pkt.getlayer("IPv6")
 
+def get_ip_address(profile, pkt):
+    is_sender = check_if_sender(profile, pkt)
+    ipp = get_ip_layer(pkt)
+    return None if ipp is None else ipp.dst if is_sender else ipp.src
 
 def check_if_sender(profile, pkt):
     """Checks whether the profile owner sent the given packet"""
@@ -366,8 +373,7 @@ def find_whitelist_entry(profile, pkt, add_if_not_found=True, domain=None):
        matches the data in the packet. If no such entry is found, it is
        created"""
     is_sender = check_if_sender(profile, pkt)
-    ipp = get_ip_layer(pkt)
-    ip = None if ipp is None else ipp.dst if is_sender else ipp.src
+    ip = get_ip_address(profile, pkt)
     macp = pkt.getlayer("Ether")
     mac = None if not in_network(ip) else macp.dst if is_sender else macp.src
     data = profile.get("send") if is_sender else profile.get("recv")
@@ -455,3 +461,29 @@ def update_whitelist_dns(profile, pkt):
             uniq_domain = [d for d in domains if d not in entry["domain"]]
             entry["domain"].extend(uniq_domain)
             entry["ip"].extend([ip for ip in ips if ip not in entry["ip"]])
+
+
+# ----------------------------- CHECK PROFILE --------------------------- #
+
+def check_ddos_tcp(profile, pkt):
+    if pkt.haslayer("TCP"):
+        return check_ddos_layer4(profile, pkt, "TCP")
+
+
+def check_ddos_udp(profile, pkt):
+    if pkt.haslayer("UDP"):
+        return check_ddos_layer4(profile, pkt, "UDP")
+
+
+def check_ddos_layer4(profile, pkt, proto):
+    wlist = find_whitelist_entry(profile, pkt, add_if_not_found=False)
+    if wlist is not None:
+        port = layer.dport if check_if_sender(profile, pkt) else layer.sport
+        protocols = wlist.get("protocols")
+        if protocols.get(proto) is not None:
+            if protocols.get(proto).get(port) is not None:
+                return None     # Entry found -> Valid call.
+        ip = get_ip_address(profile, pkt)
+        return "A device is doing unexpected network calls. This might " +
+               "be an indication that the device has been compromised.\n" +
+               "Additional information: " + proto + " " + ip + ":" + port

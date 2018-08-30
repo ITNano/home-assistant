@@ -82,6 +82,7 @@ def async_setup(hass, config=None):
     hass.bus.async_listen(const.EVENT_HOMEASSISTANT_STOP, save_profiles)
     hass.bus.async_listen("trigger_profile_save", save_profiles)
 
+    global DETECTION_OBJ
     DETECTION_OBJ = ThreatDetection(hass, "td_obj", "Threat Detection", "mdi:security-close")
     component.async_add_entities([DETECTION_OBJ])       # Might require await call.
 

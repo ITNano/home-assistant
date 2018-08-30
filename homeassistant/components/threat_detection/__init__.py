@@ -476,6 +476,7 @@ def check_ddos_udp(profile, pkt):
 
 
 def check_ddos_layer4(profile, pkt, layer, proto):
+    _LOGGER.debug("Checking Layer4 %s" % (proto))
     wlist = find_whitelist_entry(profile, pkt, add_if_not_found=False)
     if wlist is not None:
         port = layer.dport if check_if_sender(profile, pkt) else layer.sport

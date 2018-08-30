@@ -119,7 +119,7 @@ class ThreatDetection(Entity):
     @property
     def state(self):
         """Return the current state (nbr of detections)."""
-        return len(threats)
+        return len(self._threats)
 
     @property
     def state_attributes(self):
@@ -135,7 +135,7 @@ class ThreatDetection(Entity):
         else:
             self._threats.append(str(threats))
         self._hass.states.async_set(
-            "threat_detection.Threats_Detected", DEFAULT_DETECTIONS)
+            "threat_detection.Threats_Detected", len(self._threats))
 
 
 def on_network_capture(packet_list):

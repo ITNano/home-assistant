@@ -56,7 +56,8 @@ async def async_setup(hass, config=None):
     # It seems to break our stuff.
     component = EntityComponent(_LOGGER, DOMAIN, hass)
 
-    yield from component.async_setup(config)
+    async for x in component.async_setup(config):
+        yield x
 
     userinput = config[DOMAIN].get(CONF_TEXT, DEFAULT_TEXT)
 

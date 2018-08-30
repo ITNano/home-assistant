@@ -127,7 +127,6 @@ class ThreatDetection(Entity):
         return {}
 
     def add_threats(self, threats):
-        _LOGGER.info("Adding threat to list")
         """Adds newly found threats."""
         if isinstance(threats, list):
             self._threats.extend(threats)
@@ -135,6 +134,8 @@ class ThreatDetection(Entity):
             self._threats.append(threats)
         else:
             self._threats.append(str(threats))
+        self._hass.states.async_set(
+            "threat_detection.Threats_Detected", DEFAULT_DETECTIONS)
 
 
 def on_network_capture(packet_list):

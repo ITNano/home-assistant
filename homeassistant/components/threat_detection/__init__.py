@@ -48,8 +48,8 @@ DETECTION_OBJ = None
 STORAGE_NAME = "td_profiles.yaml"
 
 
-@asyncio.coroutine
-def async_setup(hass, config=None):
+# @asyncio.coroutine
+async def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     # This seems to be a thing. I don't know what it does. May have to do with
     # getting things to and from dependent platforms?

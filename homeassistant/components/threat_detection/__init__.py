@@ -531,14 +531,16 @@ def check_ddos_udp(profile, pkt):
 
 def check_ddos_layer4(profile, pkt, layer, proto):
     _LOGGER.debug("Checking Layer4 %s" % (proto))
-    wlist = find_whitelist_entry(profile, pkt, add_if_not_found=False)
-    if wlist is not None:
-        port = layer.dport if check_if_sender(profile, pkt) else layer.sport
-        protocols = wlist.get("protocols")
-        if protocols.get(proto) is not None:
-            if protocols.get(proto).get(port) is not None:
-                return None     # Entry found -> Valid call.
-        ip = get_ip_address(profile, pkt)
-        return ("A device is doing unexpected network calls. This might "
-               "be an indication that the device has been compromised. "
-               "Additional information: %s %s:%i") % (proto, ip, port)
+    is_sender = check_if_sender(profile, pkt)
+    if is_sender:
+        wlist = find_whitelist_entry(profile, pkt, add_if_not_found=False)
+        if wlist is not None:
+            port = layer.dport
+            protocols = wlist.get("protocols")
+            if protocols.get(proto) is not None:
+                if protocols.get(proto).get(port) is not None:
+                    return None     # Entry found -> Valid call.
+            ip = get_ip_address(profile, pkt)
+            return ("A device is doing unexpected network calls. This might "
+                   "be an indication that the device has been compromised. "
+                   "Additional information: %s %s:%i") % (proto, ip, port)

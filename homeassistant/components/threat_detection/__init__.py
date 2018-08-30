@@ -467,15 +467,15 @@ def update_whitelist_dns(profile, pkt):
 
 def check_ddos_tcp(profile, pkt):
     if pkt.haslayer("TCP"):
-        return check_ddos_layer4(profile, pkt, "TCP")
+        return check_ddos_layer4(profile, pkt, pkt.getlayer("TCP"), "tcp")
 
 
 def check_ddos_udp(profile, pkt):
     if pkt.haslayer("UDP"):
-        return check_ddos_layer4(profile, pkt, "UDP")
+        return check_ddos_layer4(profile, pkt, pkt.getlayer("UDP"), "udp")
 
 
-def check_ddos_layer4(profile, pkt, proto):
+def check_ddos_layer4(profile, pkt, layer, proto):
     wlist = find_whitelist_entry(profile, pkt, add_if_not_found=False)
     if wlist is not None:
         port = layer.dport if check_if_sender(profile, pkt) else layer.sport

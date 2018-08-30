@@ -56,7 +56,7 @@ def async_setup(hass, config=None):
     # It seems to break our stuff.
     component = EntityComponent(_LOGGER, DOMAIN, hass)
 
-    yield from component.async_setup(config)
+    # yield from component.async_setup(config)
 
     userinput = config[DOMAIN].get(CONF_TEXT, DEFAULT_TEXT)
 
@@ -84,7 +84,7 @@ def async_setup(hass, config=None):
 
     global DETECTION_OBJ
     DETECTION_OBJ = ThreatDetection(hass, "td_obj", "Threat Detection", "mdi:security-close")
-    component.async_add_entities([DETECTION_OBJ])       # Might require await call.
+    await component.async_add_entities([DETECTION_OBJ])       # Might require await call.
 
     _LOGGER.info("The threat_detection component is set up!")
 

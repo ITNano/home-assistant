@@ -313,7 +313,7 @@ class Profile(object):
         if self.is_profiling():
             self.update(packet)
         else:
-            self.check(packet)
+            return self.check(packet)
 
     def update(self, packet):
         """Calls all functions to update the profile with packet data"""

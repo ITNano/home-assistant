@@ -127,6 +127,7 @@ class ThreatDetection(Entity):
         return {}
 
     def add_threats(self, threats):
+        _LOGGER.info("Adding threat to list")
         """Adds newly found threats."""
         if isinstance(threats, list):
             self._threats.extend(threats)

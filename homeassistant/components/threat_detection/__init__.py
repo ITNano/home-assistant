@@ -109,7 +109,7 @@ class ThreatDetection(Entity):
     @property
     def name(self):
         """Return name of this module."""
-        return this._name
+        return self._name
 
     @property
     def icon(self):

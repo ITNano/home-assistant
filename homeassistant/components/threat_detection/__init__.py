@@ -24,7 +24,7 @@ _LOGGER = logging.getLogger(__name__)
 
 DOMAIN = "threat_detection"
 
-ENTITIY_ID_FORMAT = DOMAIN + ".[]"
+ENTITIY_ID_FORMAT = DOMAIN + ".{}"
 
 DEPENDENCIES = []
 
@@ -142,6 +142,7 @@ def on_network_capture(packet_list):
     """Called when a network packet list has been captured """
     _LOGGER.info(packet_list)
     transfer_data_to_profile(packet_list)
+    _LOGGER.info("Done processing packets")
 
 
 # @property

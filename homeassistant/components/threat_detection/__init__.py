@@ -113,8 +113,10 @@ class ThreatDetection(Entity):
 
     @property
     def state_attributes(self):
-        """Return the state attributes."""
-        return {}
+        """Return state attributes of the component"""
+        return {'version': '0.1.0.0',
+                'latest_threat': self.get_latest_threat()
+               }
 
     def add_threats(self, threats):
         """Adds newly found threats."""
@@ -125,18 +127,18 @@ class ThreatDetection(Entity):
         else:
             self._threats.append(str(threats))
 
+    def get_latest_threat(self):
+        if self._threats:
+            return self._threats[-1]
+        else:
+            return None
+
 
 def on_network_capture(packet_list):
     """Called when a network packet list has been captured """
     _LOGGER.info(packet_list)
     transfer_data_to_profile(packet_list)
     _LOGGER.info("Done processing packets")
-
-
-# @property
-# def state_attributes(self):
-#     """Return state attributes of the component"""
-#     return self._attributes
 
 def safe_exc(func, default, *args):
     """Excecutes a function and discards all exceptions it causes"""

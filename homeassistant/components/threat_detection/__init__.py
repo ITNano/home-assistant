@@ -204,7 +204,9 @@ class PacketCapturer:
             all_files = [f for f in os.listdir(path) if isfile(join(path, f))]
             files = list(filter(pcap_filter(event.src_path), all_files))
             # Parse data from pcap format
+            _LOGGER.info("Reading network files")
             data = [safe_exc(rdpcap, [], join(path, file)) for file in files]
+            _LOGGER.info("Done reading network files")
             # Remove read files so data are only read once
             for file in files:
                 os.remove(join(path, file))

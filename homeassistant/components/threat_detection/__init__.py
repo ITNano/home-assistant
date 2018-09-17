@@ -29,15 +29,11 @@ ENTITIY_ID_FORMAT = DOMAIN + ".{}"
 DEPENDENCIES = []
 
 # Configuration input
-CONF_TEXT = "test"
-DEFAULT_TEXT = "default"
-DEFAULT_DETECTIONS = 0
+# -- No config available yet.
 # Here we need to add everything that is required from the conf-file if we
 # need some input from the user.
 CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({
-        vol.Required(CONF_TEXT, default=DEFAULT_TEXT): cv.string,
-    })
+    DOMAIN: vol.Schema({})
 }, extra=vol.ALLOW_EXTRA)
 
 CAPTURER = None
@@ -58,15 +54,9 @@ async def async_setup(hass, config=None):
 
     # yield from component.async_setup(config)
 
-    userinput = config[DOMAIN].get(CONF_TEXT, DEFAULT_TEXT)
-
     # Set up network properties
     IGNORE_LIST.extend(get_gateway_macs())
     SUBNETS.extend(get_subnets())
-
-    hass.states.async_set(
-        "threat_detection.Threats_Detected", DEFAULT_DETECTIONS)
-    hass.states.async_set("threat_detection.Input", userinput)
 
     # Start capturing packets from network
     global CAPTURER
@@ -134,8 +124,6 @@ class ThreatDetection(Entity):
             self._threats.append(threats)
         else:
             self._threats.append(str(threats))
-        self._hass.states.async_set(
-            "threat_detection.Threats_Detected", len(self._threats))
 
 
 def on_network_capture(packet_list):

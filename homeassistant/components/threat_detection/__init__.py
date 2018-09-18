@@ -73,11 +73,7 @@ def setup_devices(devices):
     for device in devices:
         DEVICES.update({device.mac: {'entity_id': device.entity_id,
                                      'name': device.name}})
-
-
     _LOGGER.info("DEVICE_SCAN: %s", DEVICES)
-
-
 # def pretty_string(obj, string_builder):
 #     """Prints a dict to log, may or may not be done prettily."""
 #     if isinstance(obj, dict):
@@ -101,8 +97,6 @@ def setup_devices(devices):
 #                 return " ".join(string_builder)
 #     else:
 #         return obj
-
-
 # @property
 # def state_attributes(self):
 #     """Return state attributes of the component"""

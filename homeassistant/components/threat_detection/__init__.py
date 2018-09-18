@@ -14,8 +14,10 @@ from threading import Lock
 import logging
 import yaml
 import voluptuous as vol
-import homeassistant.const as const
 from homeassistant.helpers.entity import Entity
+
+import homeassistant.const as const
+
 from homeassistant.helpers.entity_component import EntityComponent
 
 _LOGGER = logging.getLogger(__name__)
@@ -77,6 +79,12 @@ async def async_setup(hass, config=None):
     await component.async_add_entities([DETECTION_OBJ])
 
     _LOGGER.info("The threat_detection component is set up!")
+
+    def state_changed_listener(event):
+        """Listens to and handle state changes in the state machine."""
+        hass.async_add_job(state_changed_handler, event)
+
+    hass.bus.async_listen(const.EVENT_STATE_CHANGED, state_changed_listener)
 
     return True
 
@@ -540,3 +548,20 @@ def check_ddos_layer4(profile, pkt, layer, proto):
         return ("A device is doing unexpected network calls. This might "
                 "be an indication that the device has been compromised. "
                 "Additional information: %s %s:%i") % (proto, ip, port)
+
+
+def state_changed_handler(event):
+    """Handles what to do in the event of a state change."""
+    event_dict = event.as_dict()
+    entity_id = event_dict['data']['entity_id']
+    new_state_dict = event_dict['data']['new_state'].as_dict()
+    if event_dict['data']['old_state'] is not None:
+        old_state_dict = event_dict['data']['old_state'].as_dict()
+    else:
+        old_state_dict = event_dict['data']['old_state'] = "NONE"
+    _LOGGER.debug("State has changed! Event:  %s\n"
+                  "ENTITY_ID: %s\n"
+                  "NEW_STATE: %s\n"
+                  "OLD_STATE: %s",
+                  event_dict, entity_id, new_state_dict, old_state_dict)
+

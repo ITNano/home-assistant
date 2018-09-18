@@ -11,13 +11,13 @@ import os
 from os.path import dirname, basename, isfile, join
 from datetime import datetime, timedelta
 from threading import Lock
-import asyncio
 import logging
 import yaml
 import voluptuous as vol
-import homeassistant.const as const
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
+
+import homeassistant.const as const
+
 from homeassistant.helpers.entity_component import EntityComponent
 
 _LOGGER = logging.getLogger(__name__)
@@ -73,10 +73,18 @@ async def async_setup(hass, config=None):
     hass.bus.async_listen("trigger_profile_save", save_profiles)
 
     global DETECTION_OBJ
-    DETECTION_OBJ = ThreatDetection(hass, "td_obj", "Threat Detection", "mdi:security-close")
-    await component.async_add_entities([DETECTION_OBJ])       # Might require await call.
+    DETECTION_OBJ = ThreatDetection(
+        hass, "td_obj", "Threat Detection", "mdi:security-close")
+    # Might require await call.
+    await component.async_add_entities([DETECTION_OBJ])
 
     _LOGGER.info("The threat_detection component is set up!")
+
+    def state_changed_listener(event):
+        """Listens to and handle state changes in the state machine."""
+        hass.async_add_job(state_changed_handler, event)
+
+    hass.bus.async_listen(const.EVENT_STATE_CHANGED, state_changed_listener)
 
     return True
 
@@ -115,8 +123,7 @@ class ThreatDetection(Entity):
     def state_attributes(self):
         """Return state attributes of the component"""
         return {'version': '0.1.0.0',
-                'latest_threat': self.get_latest_threat()
-               }
+                'latest_threat': self.get_latest_threat()}
 
     def add_threats(self, threats):
         """Adds newly found threats."""
@@ -128,20 +135,20 @@ class ThreatDetection(Entity):
             self._threats.append(str(threats))
 
     def get_latest_threat(self):
+        """Retrieves the latest registered threat."""
         if self._threats:
             return self._threats[-1]
-        else:
-            return None
 
 
 def on_network_capture(packet_list):
-    """Called when a network packet list has been captured """
+    """Called when a network packet list has been captured. """
     _LOGGER.info(packet_list)
     transfer_data_to_profile(packet_list)
     _LOGGER.info("Done processing packets")
 
+
 def safe_exc(func, default, *args):
-    """Excecutes a function and discards all exceptions it causes"""
+    """Excecutes a function and discards all exceptions it causes."""
     try:
         return func(*args)
     except Exception:
@@ -266,9 +273,7 @@ def in_network(ip_addr):
         return any(get_subnet(ip_addr, nm)[0] == ip2 for ip2, nm in SUBNETS)
 
 
-
 # ------------------------------- PROFILES ----------------------------- #
-
 def load_profiles(filename):
     """Loads device profiles from te given yaml file"""
     try:
@@ -400,10 +405,13 @@ def get_ip_layer(pkt):
     elif pkt.haslayer("IPv6"):
         return pkt.getlayer("IPv6")
 
+
 def get_ip_address(profile, pkt):
+    """Retrieves the IP layer from pkt."""
     is_sender = check_if_sender(profile, pkt)
     ipp = get_ip_layer(pkt)
     return None if ipp is None else ipp.dst if is_sender else ipp.src
+
 
 def check_if_sender(profile, pkt):
     """Checks whether the profile owner sent the given packet"""
@@ -513,17 +521,20 @@ def update_whitelist_dns(profile, pkt):
 # ----------------------------- CHECK PROFILE --------------------------- #
 
 def check_ddos_tcp(profile, pkt):
+    """Checks that pkt conforms to tcp profile."""
     if pkt.haslayer("TCP"):
         return check_ddos_layer4(profile, pkt, pkt.getlayer("TCP"), "tcp")
 
 
 def check_ddos_udp(profile, pkt):
+    """Checks that network traffic conforms to UDP format."""
     if pkt.haslayer("UDP"):
         return check_ddos_layer4(profile, pkt, pkt.getlayer("UDP"), "udp")
 
 
 def check_ddos_layer4(profile, pkt, layer, proto):
-    _LOGGER.debug("Checking Layer4 %s" % (proto))
+    """Checks that the network traffic conforms to profile at layer4."""
+    _LOGGER.debug("Checking Layer4 %s", proto)
     is_sender = check_if_sender(profile, pkt)
     if is_sender:
         wlist = find_whitelist_entry(profile, pkt, add_if_not_found=False)
@@ -535,5 +546,22 @@ def check_ddos_layer4(profile, pkt, layer, proto):
                     return None     # Entry found -> Valid call.
         ip = get_ip_address(profile, pkt)
         return ("A device is doing unexpected network calls. This might "
-               "be an indication that the device has been compromised. "
-               "Additional information: %s %s:%i") % (proto, ip, port)
+                "be an indication that the device has been compromised. "
+                "Additional information: %s %s:%i") % (proto, ip, port)
+
+
+def state_changed_handler(event):
+    """Handles what to do in the event of a state change."""
+    event_dict = event.as_dict()
+    entity_id = event_dict['data']['entity_id']
+    new_state_dict = event_dict['data']['new_state'].as_dict()
+    if event_dict['data']['old_state'] is not None:
+        old_state_dict = event_dict['data']['old_state'].as_dict()
+    else:
+        old_state_dict = event_dict['data']['old_state'] = "NONE"
+    _LOGGER.debug("State has changed! Event:  %s\n"
+                  "ENTITY_ID: %s\n"
+                  "NEW_STATE: %s\n"
+                  "OLD_STATE: %s",
+                  event_dict, entity_id, new_state_dict, old_state_dict)
+

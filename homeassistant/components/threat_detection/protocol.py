@@ -97,3 +97,9 @@ class IEEE802_15_4(SendRecvProtocol):
 
     def __init__(self, sender, receiver):
         SendRecvProtocol.__init__(self, sender, receiver)
+        
+        
+class RadioTap(Protocol):
+
+    def __init__(self):
+        Protocol.__init__(self)

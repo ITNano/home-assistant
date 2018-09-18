@@ -72,11 +72,11 @@ def state_changed_handler(event):
         old_state_dict = event_dict['data']['old_state'].as_dict()
     else:
         old_state_dict = event_dict['data']['old_state'] = "NONE"
-    _LOGGER.info("State has changed! Event:  %s\n"
-                 "ENTITY_ID: %s\n"
-                 "NEW_STATE: %s\n"
-                 "OLD_STATE: %s",
-                 event_dict, entity_id, new_state_dict, old_state_dict)
+    _LOGGER.debug("State has changed! Event:  %s\n"
+                  "ENTITY_ID: %s\n"
+                  "NEW_STATE: %s\n"
+                  "OLD_STATE: %s",
+                  event_dict, entity_id, new_state_dict, old_state_dict)
 
 # @property
 # def state_attributes(self):

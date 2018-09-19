@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 import pickle
 
 """All current profiles in the system"""
-PROFILES = []
+PROFILES = {}
 IGNORE_LIST = []
 
 class Profile(object):
@@ -76,14 +76,10 @@ def find_profiles(layer):
 
 def get_profile(id):
     """Retrieves/creates the profile with the given ID"""
-    profiles = [p for p in PROFILES if p.id() == id]
-    if not profiles:
-        if id not in IGNORE_LIST:
-            profile = Profile(id)
-            PROFILES.append(profile)
-            return profile
-    else:
-        return profiles[0]
+    if id not in IGNORE_LIST:
+        if PROFILES.get(id) is None:
+            PROFILES[id] = Profile(id)
+        return PROFILES.get(id)
 
 
 def profile_packet(profiles, packet, layer):

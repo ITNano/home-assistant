@@ -1,7 +1,7 @@
-# """""""""""""""""""""""""""""""""""""""""""""""""""""""" #
-#                 --- DECRIPTION ---                       #
-# Helper class for representing protocols and their layers #
-# """""""""""""""""""""""""""""""""""""""""""""""""""""""" #
+# """"""""""""""""""""""""""""""""""""""""""""""""""""""""" #
+#                 --- DECRIPTION ---                        #
+# Helper module for representing protocols and their layers #
+# """"""""""""""""""""""""""""""""""""""""""""""""""""""""" #
 
 BASE_PROTOCOLS = []
 
@@ -20,14 +20,15 @@ def get_all_layers():
            }
 
 def ignore_layers():
+    """Returns the layer which are not to be processed"""
     return ['Raw']
            
 def get_protocol_profile(protocols, packet, add_if_not_found=True):
     """Retrieves a protocol object for an arbitrary packet"""
-    cls = get_all_layers().get(packet.name)
-    if cls is None and packet.name in ignore_layers():
+    if packet.name in ignore_layers():
         return None
         
+    cls = get_all_layers().get(packet.name)
     matches = [p for p in protocols if type(p) == cls and p.matches(packet)]
     if len(matches) != 1:
         if not matches:
@@ -51,10 +52,12 @@ def get_first_layer(packet, add_if_not_found=True):
     return get_protocol_profile(BASE_PROTOCOLS, packet, add_if_not_found)
 
 def get_next_layer(protocol, packet, add_if_not_found=True):
+    """Retrieves the protocol object for next layer"""
     return get_protocol_profile(protocol.get_next_protocol(),
                                 packet, add_if_not_found)
 
 def get_property(packet, prop, default=None):
+    """Retrieves a property from a scapy object"""
     try:
         val = packet.getfield_and_val(prop)
         if val is not None and len(val) == 2:
@@ -153,10 +156,12 @@ class SendRecvProtocol(Protocol):
 class Raw(Protocol):
 
     def __init__(self, packet):
+        """Initialize the object"""
         Protocol.__init__(self, 'Raw')
         self._data = packet.load
         
     def get_raw_data():
+        """Retrieve the raw data of the original packet"""
         return self._data
 
     def matches(self, packet):

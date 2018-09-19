@@ -1,12 +1,20 @@
+# """""""""""""""""""""""""""""""""""""""""""""""""""""""" #
+#                 --- DECRIPTION ---                       #
+# Handles profiling and everything that has to do with it  #
+# """""""""""""""""""""""""""""""""""""""""""""""""""""""" #
+
 from protocol import *
 from datetime import datetime, timedelta
 import pickle
 
+"""All current profiles in the system"""
 PROFILES = []
 
 class Profile(object):
 
+    """ External profilers on the form (protocol_type, profiler)"""
     PROFILERS = {}
+    """ External analysers on the form (protocol_type, analyser)"""
     ANALYSERS = {}
     
     def __init__(self, id):
@@ -22,27 +30,32 @@ class Profile(object):
         return datetime.now() < self._profiling_end
         
     def id(self):
+        """Retrieves the unique ID of this profile"""
         return self._id
         
     def protocols(self):
+        """Retrieves the protocol data profiled by this entity"""
         return self._protocols
 
     @staticmethod
-    def add_profiler(cls, profiler):
-        if not Profile.PROFILERS.get(cls):
-            Profile.PROFILERS[cls] = [profiler]
+    def add_profiler(protocol_type, profiler):
+        """Adds the given function as a profiler for a certain protocol"""
+        if not Profile.PROFILERS.get(protocol_type):
+            Profile.PROFILERS[protocol_type] = [profiler]
         else:
-            Profile.PROFILERS[cls].append(profiler)
+            Profile.PROFILERS[protocol_type].append(profiler)
 
     @staticmethod
-    def add_analyser(cls, analyser):
-        if not Profile.ANALYSERS.get(cls):
-            Profile.ANALYSERS[cls] = [analyser]
+    def add_analyser(protocol_type, analyser):
+        """Adds the given function as an analyser for a certain protocol"""
+        if not Profile.ANALYSERS.get(protocol_type):
+            Profile.ANALYSERS[protocol_type] = [analyser]
         else:
-            Profile.ANALYSERS[cls].append(analyser)
+            Profile.ANALYSERS[protocol_type].append(analyser)
 
 
 def handle_packet(packet):
+    """Handles incoming packets and routes them to their destination"""
     # Find correct base tree
     layer = get_first_layer(packet)
     # Find/create matching profiles
@@ -55,6 +68,7 @@ def handle_packet(packet):
 
 
 def find_profiles(layer):
+    """Finds or creates the profiles for the communicating parties"""
     sender = [p for p in PROFILES if p._id == layer.get_sender()]
     receiver = [p for p in PROFILES if p._id == layer.get_receiver()]
     if not sender:
@@ -67,6 +81,7 @@ def find_profiles(layer):
 
 
 def profile_packet(profiles, packet, layer):
+    """Performs a profiling of the packet and updates given profiles"""
     # Construct tree
     curr_layer = layer
     curr_packet = packet
@@ -86,6 +101,7 @@ def profile_packet(profiles, packet, layer):
 
 
 def analyse_packet(packet, layer):
+    """Analyses the given packet"""
     res = []
     curr_layer = layer
     while(packet):
@@ -100,15 +116,18 @@ def analyse_packet(packet, layer):
 
 
 def save_profiles(filename):
+    """Saves all current profiles to a savefile"""
     with open(filename, 'wb') as output:
         pickle.dump(PROFILES, output, pickle.HIGHEST_PROTOCOL)
 
 
 def load_profiles(filename):
+    """Loads saved profiles from a savefile"""
     with open(filename, 'rb') as input:
         global PROFILES
         PROFILES = pickle.load(input)
 
 
 def all_profiles():
+    """Retrieves all current profiles"""
     return PROFILES

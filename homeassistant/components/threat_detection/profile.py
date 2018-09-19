@@ -1,5 +1,6 @@
 from protocol import *
 from datetime import datetime, timedelta
+import pickle
 
 PROFILES = []
 
@@ -96,3 +97,18 @@ def analyse_packet(packet, layer):
             curr_layer = get_next_layer(curr_layer, packet.payload)
         packet = packet.payload
     return [r for r in res if r is not None]
+
+
+def save_profiles(filename):
+    with open(filename, 'wb') as output:
+        pickle.dump(PROFILES, output, pickle.HIGHEST_PROTOCOL)
+
+
+def load_profiles(filename):
+    with open(filename, 'rb') as input:
+        global PROFILES
+        PROFILES = pickle.load(input)
+
+
+def all_profiles():
+    return PROFILES

@@ -9,6 +9,7 @@ import pickle
 
 """All current profiles in the system"""
 PROFILES = []
+IGNORE_LIST = []
 
 class Profile(object):
 
@@ -69,15 +70,20 @@ def handle_packet(packet):
 
 def find_profiles(layer):
     """Finds or creates the profiles for the communicating parties"""
-    sender = [p for p in PROFILES if p._id == layer.get_sender()]
-    receiver = [p for p in PROFILES if p._id == layer.get_receiver()]
-    if not sender:
-        sender = [Profile(layer.get_sender())]
-        PROFILES.extend(sender)
-    if not receiver:
-        receiver = [Profile(layer.get_receiver())]
-        PROFILES.extend(receiver)
-    return [sender[0], receiver[0]]
+    res = [get_profile(layer.get_sender()), get_profile(layer.get_receiver())]
+    return [r for r in res if r is not None]
+
+
+def get_profile(id):
+    """Retrieves/creates the profile with the given ID"""
+    profiles = [p for p in PROFILES if p.id() == id]
+    if not profiles:
+        if id not in IGNORE_LIST:
+            profile = Profile(id)
+            PROFILES.append(profile)
+            return profile
+    else:
+        return profiles[0]
 
 
 def profile_packet(profiles, packet, layer):
@@ -131,3 +137,8 @@ def load_profiles(filename):
 def all_profiles():
     """Retrieves all current profiles"""
     return PROFILES
+
+
+def ignore_device(id):
+    """Appends an ID to the profiling ignore list"""
+    IGNORE_LIST.append(id)

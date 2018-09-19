@@ -39,19 +39,7 @@ class Profile(object):
             Profile.ANALYSERS[cls] = [analyser]
         else:
             Profile.ANALYSERS[cls].append(analyser)
-            
 
-def find_profiles(layer):
-    sender = [p for p in PROFILES if p._id == layer.get_sender()]
-    receiver = [p for p in PROFILES if p._id == layer.get_receiver()]
-    if not sender:
-        sender = [Profile(layer.get_sender())]
-        PROFILES.extend(sender)
-    if not receiver:
-        receiver = [Profile(layer.get_receiver())]
-        PROFILES.extend(receiver)
-    return [sender[0], receiver[0]]
-    
 
 def handle_packet(packet):
     # Find correct base tree
@@ -63,7 +51,19 @@ def handle_packet(packet):
         profile_packet(profiles, packet, layer)
     else:
         return analyse_packet(packet, layer)
-        
+
+
+def find_profiles(layer):
+    sender = [p for p in PROFILES if p._id == layer.get_sender()]
+    receiver = [p for p in PROFILES if p._id == layer.get_receiver()]
+    if not sender:
+        sender = [Profile(layer.get_sender())]
+        PROFILES.extend(sender)
+    if not receiver:
+        receiver = [Profile(layer.get_receiver())]
+        PROFILES.extend(receiver)
+    return [sender[0], receiver[0]]
+
 
 def profile_packet(profiles, packet, layer):
     # Construct tree

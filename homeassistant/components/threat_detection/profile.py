@@ -129,9 +129,12 @@ def save_profiles(filename):
 
 def load_profiles(filename):
     """Loads saved profiles from a savefile"""
-    with open(filename, 'rb') as input:
-        global PROFILES
-        PROFILES = pickle.load(input)
+    try:
+        with open(filename, 'rb') as input:
+            global PROFILES
+            PROFILES = pickle.load(input)
+    except FileNotFoundError as e:
+        print("WARNING: Cannot load entries from " + str(filename) + ".")
 
 
 def all_profiles():

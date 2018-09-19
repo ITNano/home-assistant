@@ -112,7 +112,7 @@ def analyse_packet(packet, layer):
             res.append(func(curr_layer, packet))
         # Iterate to next entry
         if packet.payload:
-            curr_layer = get_next_layer(curr_layer, packet.payload)
+            curr_layer = get_next_layer(curr_layer, packet.payload, False)
         packet = packet.payload
     return [r for r in res if r is not None]
 

@@ -167,25 +167,41 @@ def get_gateways():
 
 
 def add_profile_callbacks():
-    from scapy.all import Ether
+    from scapy.all import Ether, IP
     ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether),
                     [( lambda prof, pkt: eth_prop(prof, pkt, 'src'), lambda prof, pkt: pkt.src ),       # Set source
                     ( lambda prof, pkt: eth_prop(prof, pkt, 'dst'), lambda prof, pkt: pkt.dst ),        # Set destination
                     ( lambda prof, pkt: eth_prop(prof, pkt, 'count'), lambda prof, pkt: profile_data(prof, eth_get_prop(prof, pkt, 'count'), 0)+1 )]
                    )
+    IP_PROFILER = (lambda prof, pkt: pkt.haslayer(IP),
+                    [( lambda prof, pkt: ip_prop(prof, pkt, 'src'), lambda prof, pkt: pkt.getlayer(IP).src ),       # Set source
+                    ( lambda prof, pkt: ip_prop(prof, pkt, 'dst'), lambda prof, pkt: pkt.getlayer(IP).dst ),        # Set destination
+                    ( lambda prof, pkt: ip_prop(prof, pkt, 'count'), lambda prof, pkt: profile_data(prof, ip_get_prop(prof, pkt, 'count'), 0)+1 )]
+                   )
     Profile.add_profiler(ETH_PROFILER)
+    Profile.add_profiler(IP_PROFILER)
 
 def eth_prop(prof, pkt, name):
-    return [(get_buddy(pkt.src, pkt.dst, prof.id()), dict), name]
+    return [(get_buddy(pkt.src, pkt.dst, prof.id(), pkt.src, pkt.dst), dict), name]
 
 def eth_get_prop(prof, pkt, name):
-    return [get_buddy(pkt.src, pkt.dst, prof.id()), name]
+    return [get_buddy(pkt.src, pkt.dst, prof.id(), pkt.src, pkt.dst), name]
+    
+def ip_prop(prof, pkt, name):
+    from scapy.all import IP
+    ip = pkt.getlayer(IP)
+    return [(get_buddy(pkt.src, pkt.dst, prof.id()), dict), (get_buddy(pkt.src, pkt.dst, prof.id(), ip.src, ip.dst), dict), name]
 
-def get_buddy(sender, receiver, me):
+def ip_get_prop(prof, pkt, name):
+    from scapy.all import IP
+    ip = pkt.getlayer(IP)
+    return [get_buddy(pkt.src, pkt.dst, prof.id()), get_buddy(pkt.src, pkt.dst, prof.id(), ip.src, ip.dst), name]
+
+def get_buddy(sender, receiver, me, sender_val, receiver_val):
     if me == sender:
-        return receiver
+        return receiver_val
     elif me == receiver:
-        return sender
+        return sender_val
     else:
         raise ValueError("Wait, this isn't possible. Right?")
 

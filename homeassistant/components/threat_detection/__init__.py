@@ -152,10 +152,9 @@ def state_changed_handler(event):
                   event_dict, entity_id, new_state_dict, old_state_dict)
 
 
-@asyncio.coroutine
-def async_load_device_data(hass):
+async def async_load_device_data(hass):
     _LOGGER.info("Retrieving device meta data")
-    devices = yield from hass.components.device_tracker.async_load_config(
+    devices = await hass.components.device_tracker.async_load_config(
               os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
     _LOGGER.info("Updating device meta data")
     for device in devices:

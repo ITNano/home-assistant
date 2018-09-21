@@ -176,18 +176,8 @@ def add_profile_callbacks():
     IP_PROFILER = (lambda prof, pkt: pkt.haslayer(IP),
                     [ map_packet_property(ip_prop, 'src', IP, 'src'),
                       map_packet_property(ip_prop, 'dst', IP, 'dst'),
-                      transform_property(ip_prop, 'count', 0, lambda x: x+1) ]
+                      transform_property(ip_prop, 'count', 0, lambda x: x+1)]
                     )
-    """ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether),
-                    [( lambda prof, pkt: eth_prop(prof, pkt, 'src', True), lambda prof, pkt: pkt.src ),       # Set source
-                    ( lambda prof, pkt: eth_prop(prof, pkt, 'dst', True), lambda prof, pkt: pkt.dst ),        # Set destination
-                    ( lambda prof, pkt: eth_prop(prof, pkt, 'count', True), lambda prof, pkt: profile_data(prof, eth_prop(prof, pkt, 'count'), 0)+1 )]
-                   )
-    IP_PROFILER = (lambda prof, pkt: pkt.haslayer(IP),
-                    [( lambda prof, pkt: ip_prop(prof, pkt, 'src', True), lambda prof, pkt: pkt.getlayer(IP).src ),       # Set source
-                    ( lambda prof, pkt: ip_prop(prof, pkt, 'dst', True), lambda prof, pkt: pkt.getlayer(IP).dst ),        # Set destination
-                    ( lambda prof, pkt: ip_prop(prof, pkt, 'count', True), lambda prof, pkt: profile_data(prof, ip_prop(prof, pkt, 'count'), 0)+1 )]
-                   )"""
     Profile.add_profiler(ETH_PROFILER)
     Profile.add_profiler(IP_PROFILER)
 

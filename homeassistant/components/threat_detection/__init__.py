@@ -160,6 +160,11 @@ def async_load_device_data(hass):
         DEVICES.update({device.mac: {'entity_id': device.entity_id,
                                      'name': device.name}})
 
+        # Backwards compat (add devices already existing)
+        if PROFILE.get(device.mac):
+            for prop in DEVICES[device.mac]:
+                PROFILE.set_data([prop], DEVICES[device.mac][prop])
+
 
 def get_device_information(id):
     if DEVICES.get(id) is not None:

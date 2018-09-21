@@ -323,6 +323,7 @@ def ignore_device(id):
 
 def save_profiles(filename):
     """Saves all current profiles to a savefile"""
+    _LOGGER.debug("Saving profile data: " + str(PROFILES))
     with open(filename, 'wb') as output:
         pickle.dump(PROFILES, output, pickle.HIGHEST_PROTOCOL)
 

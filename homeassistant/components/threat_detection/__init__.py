@@ -164,9 +164,9 @@ def async_load_device_data(hass):
                                      'name': device.name}})
 
         # Backwards compat (add devices already existing)
-        if PROFILE.get(device.mac):
+        if PROFILES.get(device.mac):
             for prop in DEVICES[device.mac]:
-                PROFILE.set_data([prop], DEVICES[device.mac][prop])
+                PROFILES.set_data([prop], DEVICES[device.mac][prop])
 
 
 def get_device_information(id):

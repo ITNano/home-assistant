@@ -46,6 +46,7 @@ async def async_setup(hass, config=None):
     # Set up network properties
     for device in get_gateways():
         ignore_device(device)
+    ignore_device('ff:ff:ff:ff:ff:ff')
 
     # Start capturing packets from network
     global CAPTURER
@@ -154,7 +155,14 @@ def on_network_capture(packet_list):
 
 
 def get_gateways():
-    return []
+    """Retrieves the mac addresses of all network gateways on the device"""
+    """NOTE: This function applies only to Ethernet (only to exemplify)"""
+    cmd = (" ip neigh | grep \"$(ip route list | grep default | cut -d\\  -f3"
+           " | uniq) \" | cut -d\\  -f5 | uniq ")
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+    (output, err) = proc.communicate()
+    if not err:
+        return str(output.decode()).splitlines()
 
 
 def add_profile_callbacks():

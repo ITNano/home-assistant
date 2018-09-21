@@ -34,8 +34,10 @@ CONFIG_SCHEMA = vol.Schema({
 }, extra=vol.ALLOW_EXTRA)
 
 CAPTURER = None
+DEVICES = {}
 DETECTION_OBJ = None
-STORAGE_NAME = "td_profiles.pcl"
+STORAGE_NAME = 'td_profiles.pcl'
+KNOWN_DEVICES = 'known_devices.yaml'
 
 
 # @asyncio.coroutine
@@ -147,8 +149,19 @@ def state_changed_handler(event):
                   event_dict, entity_id, new_state_dict, old_state_dict)
 
 
+async def load_device_data(hass):
+    devices = yield from hass.components.device_tracker.async_load_config(
+              os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
+    for device in devices:
+        DEVICES.update({device.mac: {'entity_id': device.entity_id,
+                                     'name': device.name}})
+
+
 def get_device_information(id):
-    return {'name': 'Unknown'}
+    if DEVICES.get(id) is not None:
+        return DEVICES.get(id)
+    else:
+        return {'name': 'Unknown'}
 
 
 def on_network_capture(packet_list):

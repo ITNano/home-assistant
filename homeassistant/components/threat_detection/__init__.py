@@ -190,12 +190,12 @@ def eth_get_prop(prof, pkt, name):
 def ip_prop(prof, pkt, name):
     from scapy.all import IP
     ip = pkt.getlayer(IP)
-    return [(get_buddy(pkt.src, pkt.dst, prof.id()), dict), (get_buddy(pkt.src, pkt.dst, prof.id(), ip.src, ip.dst), dict), name]
+    return [(get_buddy(pkt.src, pkt.dst, prof.id(), pkt.src, pkt.dst), dict), (get_buddy(pkt.src, pkt.dst, prof.id(), ip.src, ip.dst), dict), name]
 
 def ip_get_prop(prof, pkt, name):
     from scapy.all import IP
     ip = pkt.getlayer(IP)
-    return [get_buddy(pkt.src, pkt.dst, prof.id()), get_buddy(pkt.src, pkt.dst, prof.id(), ip.src, ip.dst), name]
+    return [get_buddy(pkt.src, pkt.dst, prof.id(), pkt.src, pkt.dst), get_buddy(pkt.src, pkt.dst, prof.id(), ip.src, ip.dst), name]
 
 def get_buddy(sender, receiver, me, sender_val, receiver_val):
     if me == sender:

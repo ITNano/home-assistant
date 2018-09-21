@@ -154,19 +154,17 @@ def state_changed_handler(event):
 
 @asyncio.coroutine
 def async_load_device_data(hass):
-    _LOGGER.info("Retrieving device meta data")
     devices = yield from hass.components.device_tracker.async_load_config(
               os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
-    _LOGGER.info("Updating device meta data")
     for device in devices:
-        _LOGGER.info("Updating "+str(device.mac)+" meta data")
-        DEVICES.update({device.mac: {'entity_id': device.entity_id,
+        id = device.mac.lower()
+        DEVICES.update({id: {'entity_id': device.entity_id,
                                      'name': device.name}})
 
         # Backwards compat (add devices already existing)
-        if PROFILES.get(device.mac):
-            for prop in DEVICES[device.mac]:
-                PROFILES.set_data([prop], DEVICES[device.mac][prop])
+        if PROFILES.get(id):
+            for prop in DEVICES[id]:
+                PROFILES.set_data([prop], DEVICES[id][prop])
 
 
 def get_device_information(id):

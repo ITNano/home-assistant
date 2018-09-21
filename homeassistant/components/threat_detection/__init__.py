@@ -162,7 +162,7 @@ def async_load_device_data(hass):
                                      'name': device.name}})
 
         # Backwards compat (add devices already existing)
-        _LOGGER.info("Using meta data for " + str(id)+" (" + str(DEVICES[id])+") " + PROFILES.get(id))
+        _LOGGER.info("Using meta data for " + str(id)+" (" + str(DEVICES[id])+") " + str(PROFILES.get(id)))
         if PROFILES.get(id):
             _LOGGER.info("Setting data")
             for prop in DEVICES[id]:

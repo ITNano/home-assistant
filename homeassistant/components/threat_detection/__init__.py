@@ -171,12 +171,15 @@ def add_profile_callbacks():
     ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether),
                     [( lambda prof, pkt: eth_prop(prof, pkt, 'src'), lambda prof, pkt: pkt.src ),       # Set source
                     ( lambda prof, pkt: eth_prop(prof, pkt, 'dst'), lambda prof, pkt: pkt.dst ),        # Set destination
-                    ( lambda prof, pkt: eth_prop(prof, pkt, 'count'), lambda prof, pkt: profile_data(prof, eth_prop(prof, pkt, 'count'), 0)+1 )]
+                    ( lambda prof, pkt: eth_prop(prof, pkt, 'count'), lambda prof, pkt: profile_data(prof, eth_get_prop(prof, pkt, 'count'), 0)+1 )]
                    )
     Profile.add_profiler(ETH_PROFILER)
 
 def eth_prop(prof, pkt, name):
     return [(get_buddy(pkt.src, pkt.dst, prof.id()), dict), name]
+
+def eth_get_prop(prof, pkt, name):
+    return [get_buddy(pkt.src, pkt.dst, prof.id()), name]
 
 def get_buddy(sender, receiver, me):
     if me == sender:
@@ -232,7 +235,7 @@ class Profile:
 
     def get_data(self, path):
         data = self._data
-        for prop, cls in path:
+        for prop in path:
             data = Profile.get_prop(data, prop, create_if_needed=False)
         return data
 

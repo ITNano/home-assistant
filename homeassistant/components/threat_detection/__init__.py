@@ -211,20 +211,20 @@ def ip_prop(prof, pkt, name, types=False):
 
 def tcp_prop(prof, pkt, name, types=False):
     from scapy.all import TCP
-    return ip_layer4_prop(prof, pkt, TCP, name, types)
+    return ip_layer4_prop(prof, pkt, TCP, 'TCP', name, types)
 
 def udp_prop(prof, pkt, name, types=False):
     from scapy.all import UDP
-    return ip_layer4_prop(prof, pkt, UDP, name, types)
+    return ip_layer4_prop(prof, pkt, UDP, 'UDP', name, types)
 
-def ip_layer4_prop(prof, pkt, layer, name, types=False):
+def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
     from scapy.all import IP
     ip = pkt.getlayer(IP)
-    tcp = pkt.getlayer(TCP)
+    layer4 = pkt.getlayer(layer)
     if pkt.src == prof.id():
-        return [typechoice(pkt.dst, dict, types), typechoice(ip.dst, dict, types), typechoice(tcp.dport, dict, types), name]
+        return [typechoice(pkt.dst, dict, types), typechoice(ip.dst, dict, types), typechoice(layer_name+str(layer4.dport), dict, types), name]
     else:
-        return [typechoice(pkt.src, dict, types), typechoice(ip.src, dict, types), typechoice(tcp.sport, dict, types), name]
+        return [typechoice(pkt.src, dict, types), typechoice(ip.src, dict, types), typechoice(layer_name+str(layer4.sport), dict, types), name]
 
 def typechoice(value, type, use_type):
     if use_type:

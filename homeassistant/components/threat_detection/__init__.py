@@ -47,7 +47,7 @@ def async_setup(hass, config=None):
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     # yield from component.async_setup(config)
 
-    async_load_device_data(hass)
+    yield from async_load_device_data(hass)
 
     # Set up network properties
     for device in get_gateways():

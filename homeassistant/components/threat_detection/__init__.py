@@ -169,6 +169,16 @@ def get_gateways():
 def add_profile_callbacks():
     from scapy.all import Ether, IP
     ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether),
+                    [ map_packet_property(eth_prop, 'src', Ether, 'src'),
+                      map_packet_property(eth_prop, 'dst', Ether, 'dst'),
+                      transform_property(eth_prop, 'count', 0, lambda x: x+1)]
+                   )
+    IP_PROFILER = (lambda prof, pkt: pkt.haslayer(IP),
+                    [ map_packet_property(ip_prop, 'src', IP, 'src'),
+                      map_packet_property(ip_prop, 'dst', IP, 'dst'),
+                      transform_property(ip_prop, 'count', 0, lambda x: x+1) ]
+                    )
+    """ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether),
                     [( lambda prof, pkt: eth_prop(prof, pkt, 'src', True), lambda prof, pkt: pkt.src ),       # Set source
                     ( lambda prof, pkt: eth_prop(prof, pkt, 'dst', True), lambda prof, pkt: pkt.dst ),        # Set destination
                     ( lambda prof, pkt: eth_prop(prof, pkt, 'count', True), lambda prof, pkt: profile_data(prof, eth_prop(prof, pkt, 'count'), 0)+1 )]
@@ -177,9 +187,17 @@ def add_profile_callbacks():
                     [( lambda prof, pkt: ip_prop(prof, pkt, 'src', True), lambda prof, pkt: pkt.getlayer(IP).src ),       # Set source
                     ( lambda prof, pkt: ip_prop(prof, pkt, 'dst', True), lambda prof, pkt: pkt.getlayer(IP).dst ),        # Set destination
                     ( lambda prof, pkt: ip_prop(prof, pkt, 'count', True), lambda prof, pkt: profile_data(prof, ip_prop(prof, pkt, 'count'), 0)+1 )]
-                   )
+                   )"""
     Profile.add_profiler(ETH_PROFILER)
     Profile.add_profiler(IP_PROFILER)
+
+def map_packet_property(layer_func, prop, layer, prop_name):
+    return ( lambda prof, pkt: layer_func(prof, pkt, prop, True),
+             lambda prof, pkt: pkt.getlayer(layer).getfieldval(prop_name) )
+
+def transform_property(layer_func, prop, defval, func):
+    return ( lambda prof, pkt: layer_func(prof, pkt, prop, True),
+             lambda prof, pkt: func(profile_data(prof, layer_func(prof, pkt, prop), defval)) )
 
 def eth_prop(prof, pkt, name, types=False):
     if pkt.src == prof.id():

@@ -159,12 +159,10 @@ def async_load_device_data(hass):
     for device in devices:
         id = str(device.mac).lower()
         DEVICES.update({id: {'entity_id': device.entity_id,
-                                     'name': device.name}})
+                             'name': device.name}})
 
         # Backwards compat (add devices already existing)
-        _LOGGER.info("Using meta data for " + str(id)+" (" + str(DEVICES[id])+") " + str(PROFILES.get(id)))
         if PROFILES.get(id):
-            _LOGGER.info("Setting data")
             for prop in DEVICES[id]:
                 PROFILES.set_data([prop], DEVICES[id][prop])
 
@@ -422,7 +420,6 @@ def get_profile(id):
     """Retrieves/creates the profile with the given ID"""
     if id not in IGNORE_LIST:
         if PROFILES.get(id) is None:
-            _LOGGER.info("Adding device with ID "+str(id))
             PROFILES[id] = Profile(id)
             device_info = get_device_information(id)
             for prop in device_info:

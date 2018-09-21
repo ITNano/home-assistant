@@ -187,6 +187,7 @@ def get_buddy(sender, receiver, me):
         raise ValueError("Wait, this isn't possible. Right?")
 
 def profile_data(profile, path, default):
+    _LOGGER.info(str(profile)+ " \t " + str(path))
     res = profile.get_data(path)
     if res is None:
         return default

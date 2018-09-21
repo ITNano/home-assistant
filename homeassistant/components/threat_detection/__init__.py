@@ -57,6 +57,7 @@ async def async_setup(hass, config=None):
 
     def store_profiles(event):
         """Stores profiling data in home assistant conf dir"""
+        _LOGGER.info("Running save stuffs")
         save_profiles(join(hass.config.config_dir, STORAGE_NAME))
     hass.bus.async_listen(const.EVENT_HOMEASSISTANT_STOP, store_profiles)
     hass.bus.async_listen("trigger_profile_save", store_profiles)

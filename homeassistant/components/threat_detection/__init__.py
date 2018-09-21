@@ -167,16 +167,22 @@ def get_gateways():
 
 
 def add_profile_callbacks():
-    from scapy.all import Ether, IP
+    from scapy.all import Ether, IP, TCP
     ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether),
                     [ map_packet_property(eth_prop, 'src', Ether, 'src'),
                       map_packet_property(eth_prop, 'dst', Ether, 'dst'),
-                      transform_property(eth_prop, 'count', 0, lambda x: x+1)]
+                      transform_property(eth_prop, 'count', 0, lambda pkt, x: x+1)]
                    )
     IP_PROFILER = (lambda prof, pkt: pkt.haslayer(IP),
                     [ map_packet_property(ip_prop, 'src', IP, 'src'),
                       map_packet_property(ip_prop, 'dst', IP, 'dst'),
-                      transform_property(ip_prop, 'count', 0, lambda x: x+1)]
+                      transform_property(ip_prop, 'count', 0, lambda pkt, x: x+1)]
+                    )
+    TCP_PROFILER = (lambda prof, pkt: pkt.haslayer(TCP),
+                    [ map_packet_property(tcp_prop, 'src', IP, 'sport'),
+                      map_packet_property(tcp_prop, 'dst', IP, 'dport'),
+                      transform_property(tcp_prop, 'count', 0, lambda pkt, x: x+1),
+                      transform_property(tcp_prop, 'maxsize', 0, lambda pkt, x: max(x, len(pkt.getlayer(TCP))) ]
                     )
     Profile.add_profiler(ETH_PROFILER)
     Profile.add_profiler(IP_PROFILER)
@@ -187,7 +193,7 @@ def map_packet_property(layer_func, prop, layer, prop_name):
 
 def transform_property(layer_func, prop, defval, func):
     return ( lambda prof, pkt: layer_func(prof, pkt, prop, True),
-             lambda prof, pkt: func(profile_data(prof, layer_func(prof, pkt, prop), defval)) )
+             lambda prof, pkt: func(pkt, profile_data(prof, layer_func(prof, pkt, prop), defval)) )
 
 def eth_prop(prof, pkt, name, types=False):
     if pkt.src == prof.id():
@@ -202,7 +208,24 @@ def ip_prop(prof, pkt, name, types=False):
         return [typechoice(pkt.dst, dict, types), typechoice(ip.dst, dict, types), name]
     else:
         return [typechoice(pkt.src, dict, types), typechoice(ip.src, dict, types), name]
-        
+
+def tcp_prop(prof, pkt, name, types=False):
+    from scapy.all import TCP
+    return ip_layer4_prop(prof, pkt, TCP, name, types)
+
+def udp_prop(prof, pkt, name, types=False):
+    from scapy.all import UDP
+    return ip_layer4_prop(prof, pkt, UDP, name, types)
+
+def ip_layer4_prop(prof, pkt, layer, name, types=False):
+    from scapy.all import IP
+    ip = pkt.getlayer(IP)
+    tcp = pkt.getlayer(TCP)
+    if pkt.src == prof.id():
+        return [typechoice(pkt.dst, dict, types), typechoice(ip.dst, dict, types), typechoice(tcp.dport, dict, types), name]
+    else:
+        return [typechoice(pkt.src, dict, types), typechoice(ip.src, dict, types), typechoice(tcp.sport, dict, types), name]
+
 def typechoice(value, type, use_type):
     if use_type:
         return (value, type)

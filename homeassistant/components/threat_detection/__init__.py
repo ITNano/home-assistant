@@ -167,7 +167,7 @@ def get_gateways():
 
 
 def add_profile_callbacks():
-    from scapy.all import Ether, IP, TCP
+    from scapy.all import Ether, IP, TCP, UDP
     ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether),
                     [ map_packet_property(eth_prop, 'src', Ether, 'src'),
                       map_packet_property(eth_prop, 'dst', Ether, 'dst'),
@@ -184,8 +184,16 @@ def add_profile_callbacks():
                       transform_property(tcp_prop, 'count', 0, lambda pkt, x: x+1),
                       transform_property(tcp_prop, 'maxsize', 0, lambda pkt, x: max(x, len(pkt.getlayer(TCP)))) ]
                     )
+    UDP_PROFILER = (lambda prof, pkt: pkt.haslayer(UDP),
+                    [ map_packet_property(udp_prop, 'src', IP, 'sport'),
+                      map_packet_property(udp_prop, 'dst', IP, 'dport'),
+                      transform_property(udp_prop, 'count', 0, lambda pkt, x: x+1),
+                      transform_property(udp_prop, 'maxsize', 0, lambda pkt, x: max(x, len(pkt.getlayer(UDP)))) ]
+                    )
     Profile.add_profiler(ETH_PROFILER)
     Profile.add_profiler(IP_PROFILER)
+    Profile.add_profiler(TCP_PROFILER)
+    Profile.add_profiler(UDP_PROFILER)
 
 def map_packet_property(layer_func, prop, layer, prop_name):
     return ( lambda prof, pkt: layer_func(prof, pkt, prop, True),

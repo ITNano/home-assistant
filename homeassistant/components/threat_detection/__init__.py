@@ -166,7 +166,7 @@ def get_gateways():
 
 
 def add_profile_callbacks():
-    from scapy.all import *
+    from scapy.all import Ether
     ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether), [( lambda prof, pkt: [(eth_buddy(prof, pkt), dict), 'src'], lambda prof, pkt: pkt.src) ])
     Profile.add_profiler(ETH_PROFILER)
 

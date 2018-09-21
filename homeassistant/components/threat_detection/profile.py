@@ -1,4 +1,4 @@
-from datetime import datetime, timedeltaimport picklePROFILES = []IGNORE_LIST = []
+from datetime import datetime, timedeltaimport picklePROFILES = {}IGNORE_LIST = []
 class Profile:
     PROFILERS = []    ANALYSERS = []
     def __init__(self, id):

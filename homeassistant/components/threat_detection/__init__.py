@@ -173,7 +173,7 @@ def add_profile_callbacks():
 
 
 # --------------------------------- PROFILING ------------------------------ #
-PROFILES = []
+PROFILES = {}
 IGNORE_LIST = []
 
 class Profile:

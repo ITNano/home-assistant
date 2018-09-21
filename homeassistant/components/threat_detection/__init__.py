@@ -157,11 +157,12 @@ def async_load_device_data(hass):
     devices = yield from hass.components.device_tracker.async_load_config(
               os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
     for device in devices:
-        id = device.mac.lower()
+        id = str(device.mac).lower()
         DEVICES.update({id: {'entity_id': device.entity_id,
                                      'name': device.name}})
 
         # Backwards compat (add devices already existing)
+        _LOGGER.info("Using meta data for " + str(id)+" (" + str(DEVICES[id])+")")
         if PROFILES.get(id):
             for prop in DEVICES[id]:
                 PROFILES.set_data([prop], DEVICES[id][prop])

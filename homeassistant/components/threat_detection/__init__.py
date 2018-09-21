@@ -147,6 +147,10 @@ def state_changed_handler(event):
                   event_dict, entity_id, new_state_dict, old_state_dict)
 
 
+def get_device_information(id):
+    return {'name': 'Unknown'}
+
+
 def on_network_capture(packet_list):
     """Called when a network packet list has been captured. """
     _LOGGER.info(packet_list)
@@ -394,6 +398,9 @@ def get_profile(id):
     if id not in IGNORE_LIST:
         if PROFILES.get(id) is None:
             PROFILES[id] = Profile(id)
+            device_info = get_device_information(id)
+            for prop in device_info:
+                PROFILES[id].set_data([prop], device_info[prop])
         return PROFILES.get(id)
 
         

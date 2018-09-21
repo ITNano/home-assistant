@@ -46,6 +46,8 @@ async def async_setup(hass, config=None):
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     # yield from component.async_setup(config)
 
+    async_load_device_data()
+
     # Set up network properties
     for device in get_gateways():
         ignore_device(device)
@@ -149,7 +151,8 @@ def state_changed_handler(event):
                   event_dict, entity_id, new_state_dict, old_state_dict)
 
 
-async def load_device_data(hass):
+@asyncio.coroutine
+def async_load_device_data(hass):
     devices = yield from hass.components.device_tracker.async_load_config(
               os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
     for device in devices:

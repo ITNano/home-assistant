@@ -168,11 +168,15 @@ def get_gateways():
 
 def add_profile_callbacks():
     from scapy.all import Ether
-    ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether), [( lambda prof, pkt: [(eth_buddy(prof, pkt), dict), 'src'], lambda prof, pkt: pkt.src) ])
+    ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether),
+                    [( lambda prof, pkt: eth_prop(prof, pkt, 'src'), lambda prof, pkt: pkt.src) ],       # Set source
+                    [( lambda prof, pkt: eth_prop(prof, pkt, 'dst'), lambda prof, pkt: pkt.dst) ],       # Set destination
+                    [( lambda prof, pkt: eth_prop(prof, pkt, 'count'), lambda prof, pkt: profile_data(prof, eth_prop(prof, pkt, 'count'), 0)+1 ]
+                   )
     Profile.add_profiler(ETH_PROFILER)
 
-def eth_buddy(prof, pkt):
-    return get_buddy(pkt.src, pkt.dst, prof.id())
+def eth_prop(prof, pkt, name):
+    return [(get_buddy(pkt.src, pkt.dst, prof.id()), dict), name]
 
 def get_buddy(sender, receiver, me):
     if me == sender:
@@ -181,6 +185,13 @@ def get_buddy(sender, receiver, me):
         return sender
     else:
         raise ValueError("Wait, this isn't possible. Right?")
+
+def profile_data(profile, path, default):
+    res = profile.get_data(path)
+    if res is None:
+        return default
+    return res
+
 
 
 

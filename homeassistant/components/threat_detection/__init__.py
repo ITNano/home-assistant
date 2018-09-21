@@ -232,7 +232,7 @@ class Profile:
 
     def get_data(self, path):
         data = self._data
-        for prop in path:
+        for prop, cls in path:
             data = Profile.get_prop(data, prop, create_if_needed=False)
         return data
 

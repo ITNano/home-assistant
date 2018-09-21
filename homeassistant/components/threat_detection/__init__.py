@@ -182,13 +182,15 @@ def add_profile_callbacks():
                     [ map_packet_property(tcp_prop, 'src', IP, 'sport'),
                       map_packet_property(tcp_prop, 'dst', IP, 'dport'),
                       transform_property(tcp_prop, 'count', 0, lambda pkt, x: x+1),
-                      transform_property(tcp_prop, 'maxsize', 0, lambda pkt, x: max(x, len(pkt.getlayer(TCP)))) ]
+                      transform_property(tcp_prop, 'maxsize', 0, lambda pkt, x: max(x, len(pkt.getlayer(TCP)))),
+                      transform_property(tcp_prop, 'minsize', 100000, lambda pkt, x: min(x, len(pkt.getlayer(TCP)))) ]
                     )
     UDP_PROFILER = (lambda prof, pkt: pkt.haslayer(UDP),
                     [ map_packet_property(udp_prop, 'src', IP, 'sport'),
                       map_packet_property(udp_prop, 'dst', IP, 'dport'),
                       transform_property(udp_prop, 'count', 0, lambda pkt, x: x+1),
-                      transform_property(udp_prop, 'maxsize', 0, lambda pkt, x: max(x, len(pkt.getlayer(UDP)))) ]
+                      transform_property(udp_prop, 'maxsize', 0, lambda pkt, x: max(x, len(pkt.getlayer(UDP)))),
+                      transform_property(udp_prop, 'minsize', 100000, lambda pkt, x: min(x, len(pkt.getlayer(UDP)))) ]
                     )
     Profile.add_profiler(ETH_PROFILER)
     Profile.add_profiler(IP_PROFILER)

@@ -324,7 +324,7 @@ def find_profiles(sender, receiver):
 
 def get_profile(id):
     """Retrieves/creates the profile with the given ID"""
-    _LOGGER.info(IGNORE_LIST)
+    _LOGGER.info(str(id)+' not in '+str(IGNORE_LIST)+'? '+str(id not in IGNORE_LIST))
     if id not in IGNORE_LIST:
         if PROFILES.get(id) is None:
             PROFILES[id] = Profile(id)

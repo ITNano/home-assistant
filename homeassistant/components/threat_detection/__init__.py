@@ -57,7 +57,6 @@ async def async_setup(hass, config=None):
 
     def store_profiles(event):
         """Stores profiling data in home assistant conf dir"""
-        _LOGGER.info("Running save stuffs")
         save_profiles(join(hass.config.config_dir, STORAGE_NAME))
     hass.bus.async_listen(const.EVENT_HOMEASSISTANT_STOP, store_profiles)
     hass.bus.async_listen("trigger_profile_save", store_profiles)
@@ -215,7 +214,8 @@ class Profile:
         data[path[-1]] = value
 
     def __str__(self):
-        return Profile.tree_to_string('Profile', self._data)
+        return str(self._data)
+        # return Profile.tree_to_string('Profile', self._data)
 
     @staticmethod
     def get_prop(obj, prop, new_cls=None, create_if_needed=True):
@@ -324,7 +324,7 @@ def ignore_device(id):
 
 def save_profiles(filename):
     """Saves all current profiles to a savefile"""
-    _LOGGER.info("Saving profile data: " + str(PROFILES))
+    _LOGGER.info("Saving profile data: " + [str(p) for p in PROFILES].join(' ; '))
     with open(filename, 'wb') as output:
         pickle.dump(PROFILES, output, pickle.HIGHEST_PROTOCOL)
 

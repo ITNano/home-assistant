@@ -169,9 +169,9 @@ def get_gateways():
 def add_profile_callbacks():
     from scapy.all import Ether
     ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether),
-                    [( lambda prof, pkt: eth_prop(prof, pkt, 'src'), lambda prof, pkt: pkt.src) ],       # Set source
-                    [( lambda prof, pkt: eth_prop(prof, pkt, 'dst'), lambda prof, pkt: pkt.dst) ],       # Set destination
-                    [( lambda prof, pkt: eth_prop(prof, pkt, 'count'), lambda prof, pkt: profile_data(prof, eth_prop(prof, pkt, 'count'), 0)+1 ]
+                    [( lambda prof, pkt: eth_prop(prof, pkt, 'src'), lambda prof, pkt: pkt.src ),       # Set source
+                    ( lambda prof, pkt: eth_prop(prof, pkt, 'dst'), lambda prof, pkt: pkt.dst ),        # Set destination
+                    ( lambda prof, pkt: eth_prop(prof, pkt, 'count'), lambda prof, pkt: profile_data(prof, eth_prop(prof, pkt, 'count'), 0)+1 )]
                    )
     Profile.add_profiler(ETH_PROFILER)
 

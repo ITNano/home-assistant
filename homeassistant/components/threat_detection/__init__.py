@@ -41,8 +41,8 @@ STORAGE_NAME = 'td_profiles.pcl'
 KNOWN_DEVICES = 'known_devices.yaml'
 
 
-# @asyncio.coroutine
-async def async_setup(hass, config=None):
+@asyncio.coroutine
+def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     # yield from component.async_setup(config)
@@ -72,7 +72,7 @@ async def async_setup(hass, config=None):
     DETECTION_OBJ = ThreatDetection(
         hass, "td_obj", "Threat Detection", "mdi:security-close")
     # Might require await call.
-    await component.async_add_entities([DETECTION_OBJ])
+    yield from component.async_add_entities([DETECTION_OBJ])
 
     _LOGGER.info("The threat_detection component is set up!")
 
@@ -152,9 +152,10 @@ def state_changed_handler(event):
                   event_dict, entity_id, new_state_dict, old_state_dict)
 
 
-async def async_load_device_data(hass):
+@asyncio.coroutine
+def async_load_device_data(hass):
     _LOGGER.info("Retrieving device meta data")
-    devices = await hass.components.device_tracker.async_load_config(
+    devices = yield from hass.components.device_tracker.async_load_config(
               os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
     _LOGGER.info("Updating device meta data")
     for device in devices:

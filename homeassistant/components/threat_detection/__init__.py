@@ -5,6 +5,7 @@ For more information on this component see
 todo add where to find documontation for the component.
 """
 
+import subprocess
 import os
 from os.path import dirname, basename, isfile, join
 from threading import Lock

@@ -251,13 +251,14 @@ class Profile:
     @staticmethod
     def add_profiler(profiler):
         """Input should be on the form (condition, [(save_property, value_func)])"""
-        if profiler not in PROFILERS:
-            PROFILERS.append(profiler)
+        if profiler not in Profile.PROFILERS:
+            Profile.PROFILERS.append(profiler)
         
+    @staticmethod
     def add_analyser(analyser):
         """Input should be on the form (condition, analyse_func)"""
-        if analyser not in ANALYSERS:
-            ANALYSERS.append(analyser)
+        if analyser not in Profile.ANALYSERS:
+            Profile.ANALYSERS.append(analyser)
 
 
 
@@ -279,7 +280,7 @@ def handle_packet(packet):
     
 
 def profile_packet(profile, packet):
-    for condition, save_props in PROFILERS:
+    for condition, save_props in Profile.PROFILERS:
         if condition(profile, packet):
             for prop, value_func in save_props:
                 profile.set_data(prop, value_func(profile, packet))
@@ -287,7 +288,7 @@ def profile_packet(profile, packet):
 
 def analyse_packet(profile, packet):
     res = []
-    for condition, analyse_func in ANALYSERS:
+    for condition, analyse_func in Profile.ANALYSERS:
         if condition(profile, packet):
             res.append(analyse_func(profile, packet))
     return res
@@ -301,7 +302,6 @@ def find_profiles(sender, receiver):
 
 def get_profile(id):
     """Retrieves/creates the profile with the given ID"""
-    _LOGGER.warning(str(PROFILES))
     if id not in IGNORE_LIST:
         if PROFILES.get(id) is None:
             PROFILES[id] = Profile(id)

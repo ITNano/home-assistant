@@ -5,8 +5,8 @@ For more information on this component see
 todo add where to find documontation for the component.
 """
 
-from network import PacketCapturer
-from profile import load_profiles, save_profiles, ignore_device, handle_packet
+from threat_detection.network import PacketCapturer
+from threat_detection.profile import load_profiles, save_profiles, ignore_device, handle_packet
 from os.path import join
 import logging
 import voluptuous as vol

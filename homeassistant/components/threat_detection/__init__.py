@@ -156,7 +156,7 @@ def state_changed_handler(event):
 def async_load_device_data(hass):
     """Loads meta data about devices from hass configuration into DEVICES"""
     devices = yield from hass.components.device_tracker.async_load_config(
-              os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
+        os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
     for device in devices:
         id = str(device.mac).lower()
         DEVICES.update({id: {'entity_id': device.entity_id,
@@ -198,47 +198,67 @@ def get_gateways():
 def add_profile_callbacks():
     """Creates default profilers and analysers and activates them"""
     from scapy.all import Ether, IP, TCP, UDP
-    ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether),
-                    [ map_packet_property(eth_prop, 'src', Ether, 'src'),
-                      map_packet_property(eth_prop, 'dst', Ether, 'dst'),
-                      transform_property(eth_prop, 'count', 0, lambda pkt, x: x+1)]
+    eth_profiler = (lambda prof, pkt: pkt.haslayer(Ether),
+                    [map_packet_prop(eth_prop, 'src', Ether, 'src'),
+                     map_packet_prop(eth_prop, 'dst', Ether, 'dst'),
+                     transform_prop(eth_prop, 'count', 0, increase)]
+                    )
+    ip_profiler = (lambda prof, pkt: pkt.haslayer(IP),
+                   [map_packet_prop(ip_prop, 'src', IP, 'src'),
+                    map_packet_prop(ip_prop, 'dst', IP, 'dst'),
+                    transform_prop(ip_prop, 'count', 0, increase)]
                    )
-    IP_PROFILER = (lambda prof, pkt: pkt.haslayer(IP),
-                    [ map_packet_property(ip_prop, 'src', IP, 'src'),
-                      map_packet_property(ip_prop, 'dst', IP, 'dst'),
-                      transform_property(ip_prop, 'count', 0, lambda pkt, x: x+1)]
+    tcp_profiler = (lambda prof, pkt: pkt.haslayer(TCP),
+                    [map_packet_prop(tcp_prop, 'src', IP, 'sport'),
+                     map_packet_prop(tcp_prop, 'dst', IP, 'dport'),
+                     transform_prop(tcp_prop, 'count', 0, increase),
+                     transform_prop(tcp_prop, 'maxsize', 0, max_size(TCP)),
+                     transform_prop(tcp_prop, 'minsize', 99999, min_size(TCP))]
                     )
-    TCP_PROFILER = (lambda prof, pkt: pkt.haslayer(TCP),
-                    [ map_packet_property(tcp_prop, 'src', IP, 'sport'),
-                      map_packet_property(tcp_prop, 'dst', IP, 'dport'),
-                      transform_property(tcp_prop, 'count', 0, lambda pkt, x: x+1),
-                      transform_property(tcp_prop, 'maxsize', 0, lambda pkt, x: max(x, len(pkt.getlayer(TCP)))),
-                      transform_property(tcp_prop, 'minsize', 100000, lambda pkt, x: min(x, len(pkt.getlayer(TCP)))) ]
+    udp_profiler = (lambda prof, pkt: pkt.haslayer(UDP),
+                    [map_packet_prop(udp_prop, 'src', IP, 'sport'),
+                     map_packet_prop(udp_prop, 'dst', IP, 'dport'),
+                     transform_prop(udp_prop, 'count', 0, increase),
+                     transform_prop(udp_prop, 'maxsize', 0, max_size(UDP)),
+                     transform_prop(udp_prop, 'minsize', 99999, min_size(UDP))]
                     )
-    UDP_PROFILER = (lambda prof, pkt: pkt.haslayer(UDP),
-                    [ map_packet_property(udp_prop, 'src', IP, 'sport'),
-                      map_packet_property(udp_prop, 'dst', IP, 'dport'),
-                      transform_property(udp_prop, 'count', 0, lambda pkt, x: x+1),
-                      transform_property(udp_prop, 'maxsize', 0, lambda pkt, x: max(x, len(pkt.getlayer(UDP)))),
-                      transform_property(udp_prop, 'minsize', 100000, lambda pkt, x: min(x, len(pkt.getlayer(UDP)))) ]
-                    )
-    Profile.add_profiler(ETH_PROFILER)
-    Profile.add_profiler(IP_PROFILER)
-    Profile.add_profiler(TCP_PROFILER)
-    Profile.add_profiler(UDP_PROFILER)
+    Profile.add_profiler(eth_profiler)
+    Profile.add_profiler(ip_profiler)
+    Profile.add_profiler(tcp_profiler)
+    Profile.add_profiler(udp_profiler)
 
 
-def map_packet_property(layer_func, prop, layer, prop_name):
+def map_packet_prop(layer_func, prop, layer, prop_name):
     """Profiler help function. Maps a packet property into a profile"""
-    return ( lambda prof, pkt: layer_func(prof, pkt, prop, True),
-             lambda prof, pkt: pkt.getlayer(layer).getfieldval(prop_name) )
+    return (lambda prof, pkt: layer_func(prof, pkt, prop, True),
+            lambda prof, pkt: pkt.getlayer(layer).getfieldval(prop_name))
 
 
-def transform_property(layer_func, prop, defval, func):
+def transform_prop(layer_func, prop, defval, func):
     """Profiler help function. Performs some sort of transformation of a
        property within a profile (e.g. counters, max/min values, ...)"""
-    return ( lambda prof, pkt: layer_func(prof, pkt, prop, True),
-             lambda prof, pkt: func(pkt, profile_data(prof, layer_func(prof, pkt, prop), defval)) )
+    def val_func(prof, pkt):
+        func(pkt, profile_data(prof, layer_func(prof, pkt, prop), defval))
+    return (lambda prof, pkt: layer_func(prof, pkt, prop, True), val_func)
+
+
+def increase(_, x):
+    """Increases the value by 1"""
+    return x+1
+
+
+def max_size(layer):
+    """Retrieves a function which retrieves the maximum packet length"""
+    def func(pkt, x):
+        return max(x, len(pkt.getlayer(layer)))
+    return func
+
+
+def min_size(layer):
+    """Retrieves a function which retrieves the minimum packet length"""
+    def func(pkt, x):
+        return min(x, len(pkt.getlayer(layer)))
+    return func
 
 
 def eth_prop(prof, pkt, name, types=False):
@@ -258,9 +278,11 @@ def ip_prop(prof, pkt, name, types=False):
     from scapy.all import IP
     ip = pkt.getlayer(IP)
     if pkt.src == prof.id():
-        return [typechoice(pkt.dst, dict, types), typechoice(ip.dst, dict, types), name]
+        return [typechoice(pkt.dst, dict, types),
+                typechoice(ip.dst, dict, types), name]
     else:
-        return [typechoice(pkt.src, dict, types), typechoice(ip.src, dict, types), name]
+        return [typechoice(pkt.src, dict, types),
+                typechoice(ip.src, dict, types), name]
 
 
 def tcp_prop(prof, pkt, name, types=False):
@@ -288,15 +310,19 @@ def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
     ip = pkt.getlayer(IP)
     layer4 = pkt.getlayer(layer)
     if pkt.src == prof.id():
-        return [typechoice(pkt.dst, dict, types), typechoice(ip.dst, dict, types), typechoice(layer_name+str(layer4.dport), dict, types), name]
+        return [typechoice(pkt.dst, dict, types),
+                typechoice(ip.dst, dict, types),
+                typechoice(layer_name+str(layer4.dport), dict, types), name]
     else:
-        return [typechoice(pkt.src, dict, types), typechoice(ip.src, dict, types), typechoice(layer_name+str(layer4.sport), dict, types), name]
+        return [typechoice(pkt.src, dict, types),
+                typechoice(ip.src, dict, types),
+                typechoice(layer_name+str(layer4.sport), dict, types), name]
 
 
-def typechoice(value, type, use_type):
-    """Retrieves either the value or a tuple (value, type)"""
+def typechoice(value, cls, use_type):
+    """Retrieves either the value or a tuple (value, cls)"""
     if use_type:
-        return (value, type)
+        return value, cls
     else:
         return value
 
@@ -313,6 +339,7 @@ def profile_data(profile, path, default):
 PROFILES = {}
 IGNORE_LIST = []
 
+
 class Profile:
     """Representation of a device profile"""
 
@@ -323,8 +350,8 @@ class Profile:
         """Initiates the profile object"""
         self._id = id
         self._data = {}
-        self.profiling_length = 3600*24    # one day
-        self._profiling_end = (datetime.now()+
+        self.profiling_length = 3600 * 24    # one day
+        self._profiling_end = (datetime.now() +
                                timedelta(seconds=self.profiling_length))
 
     def is_profiling(self):
@@ -400,7 +427,7 @@ class Profile:
            (condition, [(save_property, value_func)])"""
         if profiler not in Profile.PROFILERS:
             Profile.PROFILERS.append(profiler)
-        
+
     @staticmethod
     def add_analyser(analyser):
         """Adds an analyser to all profiles. Analysers should be on the form
@@ -414,16 +441,16 @@ def handle_packet(packet):
     # Find/create matching profiles
     sender, receiver = get_communicators(packet)
     profiles = find_profiles(sender, receiver)
-    
+
     profiling = len([p for p in profiles if p.is_profiling()]) > 0
     res = []
     for profile in profiles:
-        if profiling:    
+        if profiling:
             profile_packet(profile, packet)
         else:
             res.extend(analyse_packet(profile, packet))
     return [r for r in res if r is not None]
-    
+
 
 def profile_packet(profile, packet):
     """Profiles packets against matching profilers"""
@@ -459,7 +486,7 @@ def get_profile(id):
                 PROFILES[id].set_data([prop], device_info[prop])
         return PROFILES.get(id)
 
-        
+
 def get_communicators(packet):
     """Retrieves the IDs of communicating parts from a packet.
        NOTE: This is not modular atm."""
@@ -478,7 +505,7 @@ def ignore_device(id):
 def save_profiles(filename):
     """Saves all current profiles to a savefile"""
     text = ("{" + ", ".join(["'" + str(p) + "': " + str(PROFILES[p])
-                                                for p in PROFILES]) + "}")
+                             for p in PROFILES]) + "}")
     _LOGGER.info("Saving profile data: " + text.replace("'", '"'))
     with open(filename, 'wb') as output:
         pickle.dump(PROFILES, output, pickle.HIGHEST_PROTOCOL)
@@ -497,18 +524,6 @@ def load_profiles(filename):
 def all_profiles():
     """Retrieves all current profiles"""
     return PROFILES
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 # ------------------------------- NETWORKING ------------------------------- #

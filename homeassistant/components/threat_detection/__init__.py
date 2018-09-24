@@ -320,7 +320,7 @@ def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
     l4_port = layer4.dport if pkt.src == prof.get_id() else layer4.sport
     return [typechoice(mac, dict, types),
             typechoice(ip_addr, dict, types),
-            typechoice(layer_name+l4_port, dict, types), name]
+            typechoice(layer_name + str(l4_port), dict, types), name]
 
 
 def typechoice(value, cls, use_type):

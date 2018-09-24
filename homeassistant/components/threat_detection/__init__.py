@@ -2,7 +2,7 @@
 Component for detecting threats against the smart home.
 
 For more information on this component see
-todo add where to find documontation for the component.
+todo add where to find documentation for the component.
 """
 
 import subprocess
@@ -63,7 +63,7 @@ def async_setup(hass, config=None):
     add_profile_callbacks()
 
     def store_profiles(event):
-        """Stores profiling data in home assistant conf dir"""
+        """Store profiling data in home assistant conf dir."""
         save_profiles(join(hass.config.config_dir, STORAGE_NAME))
     hass.bus.async_listen(const.EVENT_HOMEASSISTANT_STOP, store_profiles)
     hass.bus.async_listen("trigger_profile_save", store_profiles)
@@ -77,7 +77,7 @@ def async_setup(hass, config=None):
     _LOGGER.info("The threat_detection component is set up!")
 
     def state_changed_listener(event):
-        """Listens to and handle state changes in the state machine."""
+        """Listen to and handle state changes in the state machine."""
         hass.async_add_job(state_changed_handler, event)
 
     hass.bus.async_listen(const.EVENT_STATE_CHANGED, state_changed_listener)
@@ -86,9 +86,10 @@ def async_setup(hass, config=None):
 
 
 class ThreatDetection(Entity):
-    """ Representation of threat detection state """
+    """Representation of threat detection state."""
 
     def __init__(self, hass, obj_id, name, icon):
+        """Initiate this object."""
         self.entity_id = ENTITIY_ID_FORMAT.format(obj_id)
         self._hass = hass
         self._name = name
@@ -112,17 +113,17 @@ class ThreatDetection(Entity):
 
     @property
     def state(self):
-        """Return the current state (nbr of detections)."""
+        """Return the current state, i.e. number of detections."""
         return len(self._threats)
 
     @property
     def state_attributes(self):
-        """Return state attributes of the component"""
+        """Return state attributes of the component."""
         return {'version': '0.1.0.0',
                 'latest_threat': self.get_latest_threat()}
 
     def add_threats(self, threats):
-        """Adds newly found threats."""
+        """Add newly found threats."""
         if isinstance(threats, list):
             self._threats.extend(threats)
         elif isinstance(threats, str):
@@ -131,13 +132,13 @@ class ThreatDetection(Entity):
             self._threats.append(str(threats))
 
     def get_latest_threat(self):
-        """Retrieves the latest registered threat."""
+        """Retrieve the latest registered threat."""
         if self._threats:
             return self._threats[-1]
 
 
 def state_changed_handler(event):
-    """Handles what to do in the event of a state change."""
+    """Handle what to do in the event of a state change."""
     event_dict = event.as_dict()
     entity_id = event_dict['data']['entity_id']
     new_state_dict = event_dict['data']['new_state'].as_dict()
@@ -154,7 +155,7 @@ def state_changed_handler(event):
 
 @asyncio.coroutine
 def async_load_device_data(hass):
-    """Loads meta data about devices from hass configuration into DEVICES"""
+    """Load meta data about devices from hass configuration into DEVICES."""
     devices = yield from hass.components.device_tracker.async_load_config(
         os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
     for device in devices:
@@ -169,12 +170,12 @@ def async_load_device_data(hass):
 
 
 def get_device_information(device_id):
-    """Retrieves device meta data"""
+    """Retrieve device meta data."""
     return DEVICES.get(device_id, {'name': 'Unknown'})
 
 
 def on_network_capture(packet_list):
-    """Called when a network packet list has been captured. """
+    """Called when a network packet list has been captured."""
     _LOGGER.info(packet_list)
     for packet in packet_list:
         handle_packet(packet)
@@ -182,8 +183,7 @@ def on_network_capture(packet_list):
 
 
 def get_gateways():
-    """Retrieves the mac addresses of all network gateways on the device
-       NOTE: This function applies only to Ethernet (only to exemplify)"""
+    """Retrieve the mac addresses of all network gateways on the device."""
     cmd = (" ip neigh | grep \"$(ip route list | grep default | cut -d\\  -f3"
            " | uniq) \" | cut -d\\  -f5 | uniq ")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -193,7 +193,7 @@ def get_gateways():
 
 
 def add_profile_callbacks():
-    """Creates default profilers and analysers and activates them"""
+    """Create default profilers and analysers and activates them."""
     from scapy.all import Ether, IP, TCP, UDP
     eth_profiler = (lambda prof, pkt: pkt.haslayer(Ether),
                     [map_packet_prop(eth_prop, 'src', Ether, 'src'),
@@ -222,53 +222,60 @@ def add_profile_callbacks():
 
 
 def map_packet_prop(layer_func, prop, layer, prop_name):
-    """Profiler help function. Maps a packet property into a profile"""
+    """Profiler help function to map a packet property into a profile."""
     return (lambda prof, pkt: layer_func(prof, pkt, prop, True),
             lambda prof, pkt: pkt.getlayer(layer).getfieldval(prop_name))
 
 
 def transform_prop(layer_func, prop, defval, func):
-    """Profiler help function. Performs some sort of transformation of a
-       property within a profile (e.g. counters, max/min values, ...)"""
+    """Profiler help function to update a property.
+
+    Performs some sort of transformation of a property within a profile
+    (e.g. count appearances, max/min values, ...)
+    """
     def val_func(prof, pkt):
-        """Applies prop from profile to the given function func(pkt, x)"""
+        """Apply prop from profile to the given function func(pkt, x)."""
         func(pkt, profile_data(prof, layer_func(prof, pkt, prop), defval))
     return lambda prof, pkt: layer_func(prof, pkt, prop, True), val_func
 
 
 def increase(_, val):
-    """Increases the value by 1"""
+    """Increase the received value by 1."""
     return val+1
 
 
 def max_size(layer):
-    """Retrieves a function which retrieves the maximum packet length"""
+    """Retrieve a function which retrieves the maximum packet length."""
     def func(pkt, val):
-        """Retrieve the maximum packet length"""
+        """Retrieve the maximum packet length."""
         return max(val, len(pkt.getlayer(layer)))
     return func
 
 
 def min_size(layer):
-    """Retrieves a function which retrieves the minimum packet length"""
+    """Retrieve a function which retrieves the minimum packet length."""
     def func(pkt, val):
-        """Retrieve the minimum packet length"""
+        """Retrieve the minimum packet length."""
         return min(val, len(pkt.getlayer(layer)))
     return func
 
 
 def eth_prop(prof, pkt, name, types=False):
-    """Returns the path of an Ethernet packet. types denotes whether this path
-       should include the type of each path element, i.e. if it is supposed
-       to be used with profile.set_data."""
+    """Return the path of an Ethernet packet.
+
+    types denotes whether this path should include the type of each path
+    element, i.e. if it is supposed to be used with profile.set_data.
+    """
     mac = pkt.dst if pkt.src == prof.get_id() else pkt.src
     return [typechoice(mac, dict, types), name]
 
 
 def ip_prop(prof, pkt, name, types=False):
-    """Returns the path of an IP packet. types denotes whether this path
-       should include the type of each path element, i.e. if it is supposed
-       to be used with profile.set_data."""
+    """Return the path of an IP packet.
+
+    types denotes whether this path should include the type of each path
+    element, i.e. if it is supposed to be used with profile.set_data.
+    """
     from scapy.all import IP
     ip_layer = pkt.getlayer(IP)
     mac = pkt.dst if pkt.src == prof.get_id() else pkt.src
@@ -278,26 +285,33 @@ def ip_prop(prof, pkt, name, types=False):
 
 
 def tcp_prop(prof, pkt, name, types=False):
-    """Returns the path of a TCP packet. types denotes whether this path
-       should include the type of each path element, i.e. if it is supposed
-       to be used with profile.set_data."""
+    """Return the path of a TCP packet.
+
+    types denotes whether this path should include the type of each path
+    element, i.e. if it is supposed to be used with profile.set_data.
+    """
     from scapy.all import TCP
     return ip_layer4_prop(prof, pkt, TCP, 'TCP', name, types)
 
 
 def udp_prop(prof, pkt, name, types=False):
-    """Returns the path of a UDP packet. types denotes whether this path
-       should include the type of each path element, i.e. if it is supposed
-       to be used with profile.set_data."""
+    """Return the path of a UDP packet.
+
+    types denotes whether this path should include the type of each path
+    element, i.e. if it is supposed to be used with profile.set_data.
+    """
     from scapy.all import UDP
     return ip_layer4_prop(prof, pkt, UDP, 'UDP', name, types)
 
 
 def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
-    """Returns the path of a UDP/TCP packet. layer denotes the scapy layer
-       object whilst layer_name is the canonical name of the layer. types
-       denotes whether this path should include the type of each path element,
-       i.e. if it is supposed to be used with profile.set_data."""
+    """Return the path of a UDP/TCP packet.
+
+    layer denotes the scapy layer object whilst layer_name is the canonical
+    name of the layer. types denotes whether this path should include
+    the type of each path element, i.e. if it is supposed to be used
+    with profile.set_data.
+    """
     from scapy.all import IP
     ip_layer = pkt.getlayer(IP)
     layer4 = pkt.getlayer(layer)
@@ -310,12 +324,12 @@ def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
 
 
 def typechoice(value, cls, use_type):
-    """Retrieves either the value or a tuple (value, cls)"""
+    """Retrieve either the value or a tuple (value, cls)."""
     return value, cls if use_type else value
 
 
 def profile_data(profile, path, default):
-    """Retrieves profile data with a fallback default value"""
+    """Retrieve profile data with a fallback default value."""
     res = profile.get_data(path)
     if res is None:
         return default
@@ -328,13 +342,13 @@ IGNORE_LIST = []
 
 
 class Profile:
-    """Representation of a device profile"""
+    """Representation of a device profile."""
 
     PROFILERS = []
     ANALYSERS = []
 
     def __init__(self, identifier):
-        """Initiates the profile object"""
+        """Initiate the profile object."""
         self._id = identifier
         self._data = {}
         self.profiling_length = 3600 * 24    # one day
@@ -342,23 +356,26 @@ class Profile:
                                timedelta(seconds=self.profiling_length))
 
     def is_profiling(self):
-        """Checks whether the profile is in the training phase"""
+        """Check whether the profile is in the training phase."""
         return datetime.now() < self._profiling_end
 
     def get_id(self):
-        """Retrieves the unique ID of this profile"""
+        """Retrieve the unique ID of this profile."""
         return self._id
 
     def get_data(self, path):
-        """Retrieves data from a path (a list of hierarchical names)"""
+        """Retrieve data from a path (a list of hierarchical names)."""
         data = self._data
         for prop in path:
             data = Profile.get_prop(data, prop, create_if_needed=False)
         return data
 
     def set_data(self, path, value):
-        """Sets data on an annotated path. The path should be a list on the
-           form [(name, type), (name, type), .... , (name, type), name]"""
+        """Set data on an annotated path.
+
+        The path should be a list on the form
+        [(name, type), (name, type), .... , (name, type), name].
+        """
         data = self._data
         # Traverse data
         for prop, cls in path[:-1]:
@@ -370,13 +387,15 @@ class Profile:
         data[path[-1]] = value
 
     def __str__(self):
-        """Retrieves a string representation of this object"""
+        """Retrieve a string representation of this object."""
         return str(self._data)
 
     @staticmethod
     def get_prop(obj, prop, new_cls=None, create_if_needed=True):
-        """Retrieves a property of an object and might create it if needed.
-           The parameter new_cls() is required if create_if_needed is True"""
+        """Retrieve a property of an object and might create it if needed.
+
+        The parameter new_cls() is required if create_if_needed is True.
+        """
         cls = type(obj)
         if cls == dict:
             if create_if_needed and obj.get(prop) is None:
@@ -393,7 +412,7 @@ class Profile:
 
     @staticmethod
     def tree_to_string(name, data, level=0):
-        """Converts this object to a string representation for debugging"""
+        """Convert this object to a string representation for debugging."""
         res = '  '*level + str(name) + ': '
         if isinstance(data, dict):
             res += '\n'
@@ -410,21 +429,26 @@ class Profile:
 
     @staticmethod
     def add_profiler(profiler):
-        """Adds a profiler to all profiles. Profilers should be on the form
-           (condition, [(save_property, value_func)])"""
+        """Add a profiler to all profiles.
+
+        Profilers should be on the following form:
+        (condition, [(save_property, value_func)])
+        """
         if profiler not in Profile.PROFILERS:
             Profile.PROFILERS.append(profiler)
 
     @staticmethod
     def add_analyser(analyser):
-        """Adds an analyser to all profiles. Analysers should be on the form
-           (condition, analyse_func)"""
+        """Add an analyser to all profiles.
+
+        An analyser should be a tuple on the form (condition, analyse_func)
+        """
         if analyser not in Profile.ANALYSERS:
             Profile.ANALYSERS.append(analyser)
 
 
 def handle_packet(packet):
-    """Handles incoming packets and routes them to their destination"""
+    """Handle incoming packets and route them to their destination."""
     # Find/create matching profiles
     sender, receiver = get_communicators(packet)
     profiles = find_profiles(sender, receiver)
@@ -440,7 +464,7 @@ def handle_packet(packet):
 
 
 def profile_packet(profile, packet):
-    """Profiles packets against matching profilers"""
+    """Profile packets against matching profilers."""
     for condition, save_props in Profile.PROFILERS:
         if condition(profile, packet):
             for prop_func, value_func in save_props:
@@ -449,7 +473,7 @@ def profile_packet(profile, packet):
 
 
 def analyse_packet(profile, packet):
-    """Analyses packets according to matching analysers"""
+    """Analyse packets according to matching analysers."""
     res = []
     for condition, analyse_func in Profile.ANALYSERS:
         if condition(profile, packet):
@@ -458,13 +482,13 @@ def analyse_packet(profile, packet):
 
 
 def find_profiles(sender, receiver):
-    """Finds or creates the profiles for the communicating parties"""
+    """Find or create the profiles for the communicating parties."""
     res = [get_profile(sender), get_profile(receiver)]
     return [r for r in res if r is not None]
 
 
 def get_profile(identifier):
-    """Retrieves/creates the profile with the given ID"""
+    """Retrieve/create the profile with the given ID."""
     if identifier not in IGNORE_LIST:
         if PROFILES.get(identifier) is None:
             PROFILES[identifier] = Profile(identifier)
@@ -475,8 +499,10 @@ def get_profile(identifier):
 
 
 def get_communicators(packet):
-    """Retrieves the IDs of communicating parts from a packet.
-       NOTE: This is not modular atm."""
+    """Retrieve the IDs of communicating parts from a packet.
+
+    NOTE: This is not modular atm.
+    """
     from scapy.all import Ether
     if packet.haslayer(Ether):
         return packet.src, packet.dst
@@ -485,12 +511,12 @@ def get_communicators(packet):
 
 
 def ignore_device(identifier):
-    """Appends an ID to the profiling ignore list"""
+    """Append an ID to the profiling ignore list."""
     IGNORE_LIST.append(identifier)
 
 
 def save_profiles(filename):
-    """Saves all current profiles to a savefile"""
+    """Save all current profiles to a savefile."""
     text = ("{" + ", ".join(["'" + str(p) + "': " + str(PROFILES[p])
                              for p in PROFILES]) + "}")
     _LOGGER.info("Saving profile data: %s", text.replace("'", '"'))
@@ -499,7 +525,7 @@ def save_profiles(filename):
 
 
 def load_profiles(filename):
-    """Loads saved profiles from a savefile"""
+    """Load saved profiles from a savefile."""
     try:
         with open(filename, 'rb') as infile:
             global PROFILES
@@ -509,19 +535,18 @@ def load_profiles(filename):
 
 
 def all_profiles():
-    """Retrieves all current profiles"""
+    """Retrieve all current profiles."""
     return PROFILES
 
 
 # ------------------------------- NETWORKING ------------------------------- #
 class PacketCapturer:
-    """Reads network packet captures and provides a way to register
-       callbacks to receive this data """
+    """Read network captures and provides this data through callbacks."""
 
     from watchdog.events import FileSystemEventHandler
 
     def __init__(self, path):
-        """Initializes and starts to monitor the given path """
+        """Initialize and starts to monitor the given path."""
         self.callbacks = []
         from watchdog.observers import Observer
         self.observer = Observer()
@@ -529,34 +554,33 @@ class PacketCapturer:
         self.observer.start()
 
     def on_event(self, packet_list):
-        """Distributes new packets to registered callbacks """
+        """Distribute new packets to registered callbacks."""
         for callback in self.callbacks:
             callback(packet_list)
 
     def add_callback(self, callback):
-        """Registers a callback for data """
+        """Register a callback for data."""
         if callback is not None:
             self.callbacks.append(callback)
 
     def __del__(self):
-        """Stop and remove path monitoring """
+        """Stop and remove path monitoring."""
         if self.observer is not None:
             self.observer.stop()
             self.observer.join()
             self.observer = None
 
     class PacketCaptureHandler(FileSystemEventHandler):
-        """Handler to handle pcap file read preprocessing """
+        """Handler to handle pcap file read preprocessing."""
 
         def __init__(self, callback):
-            """Create a handler """
+            """Create a handler."""
             super(PacketCapturer.PacketCaptureHandler, self).__init__()
             self.callback = callback
             self.lock = Lock()
 
         def on_created(self, event):
-            """Reads, interprets and removes all pcap files in the monitored
-               folder except for the newest one (due to tcpdump impl.) """
+            """Read, interpret and remove existing pcap files."""
             # Avoid concurrent reads from same files
             if not self.lock.acquire(blocking=False):
                 return
@@ -580,7 +604,7 @@ class PacketCapturer:
 
 
 def safe_exc(func, default, *args):
-    """Excecutes a function and discards all exceptions it causes."""
+    """Execute a function and discards all exceptions it causes."""
     try:
         return func(*args)
     except Exception:
@@ -589,8 +613,8 @@ def safe_exc(func, default, *args):
 
 
 def pcap_filter(ignore_file):
-    """Create filter to use for PacketCaptureHandler """
+    """Create filter to use for PacketCaptureHandler."""
     def filter_func(file):
-        """Filter to select .pcap files and ignore the given file """
+        """Filter to select .pcap files and ignore the given file."""
         return file.endswith('.pcap') and file != basename(ignore_file)
     return filter_func

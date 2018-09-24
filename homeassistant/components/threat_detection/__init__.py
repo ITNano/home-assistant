@@ -154,6 +154,7 @@ def state_changed_handler(event):
 
 @asyncio.coroutine
 def async_load_device_data(hass):
+    """Loads meta data about devices from hass configuration into DEVICES"""
     devices = yield from hass.components.device_tracker.async_load_config(
               os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
     for device in devices:
@@ -168,6 +169,7 @@ def async_load_device_data(hass):
 
 
 def get_device_information(id):
+    """Retrieves device meta data"""
     if DEVICES.get(id) is not None:
         return DEVICES.get(id)
     else:
@@ -194,6 +196,7 @@ def get_gateways():
 
 
 def add_profile_callbacks():
+    """Creates default profilers and analysers and activates them"""
     from scapy.all import Ether, IP, TCP, UDP
     ETH_PROFILER = (lambda prof, pkt: pkt.haslayer(Ether),
                     [ map_packet_property(eth_prop, 'src', Ether, 'src'),
@@ -224,21 +227,34 @@ def add_profile_callbacks():
     Profile.add_profiler(TCP_PROFILER)
     Profile.add_profiler(UDP_PROFILER)
 
+
 def map_packet_property(layer_func, prop, layer, prop_name):
+    """Profiler help function. Maps a packet property into a profile"""
     return ( lambda prof, pkt: layer_func(prof, pkt, prop, True),
              lambda prof, pkt: pkt.getlayer(layer).getfieldval(prop_name) )
 
+
 def transform_property(layer_func, prop, defval, func):
+    """Profiler help function. Performs some sort of transformation of a
+       property within a profile (e.g. counters, max/min values, ...)"""
     return ( lambda prof, pkt: layer_func(prof, pkt, prop, True),
              lambda prof, pkt: func(pkt, profile_data(prof, layer_func(prof, pkt, prop), defval)) )
 
+
 def eth_prop(prof, pkt, name, types=False):
+    """Returns the path of an Ethernet packet. types denotes whether this path
+       should include the type of each path element, i.e. if it is supposed
+       to be used with profile.set_data."""
     if pkt.src == prof.id():
         return [typechoice(pkt.dst, dict, types), name]
     else:
         return [typechoice(pkt.src, dict, types), name]
-    
+
+
 def ip_prop(prof, pkt, name, types=False):
+    """Returns the path of an IP packet. types denotes whether this path
+       should include the type of each path element, i.e. if it is supposed
+       to be used with profile.set_data."""
     from scapy.all import IP
     ip = pkt.getlayer(IP)
     if pkt.src == prof.id():
@@ -246,15 +262,28 @@ def ip_prop(prof, pkt, name, types=False):
     else:
         return [typechoice(pkt.src, dict, types), typechoice(ip.src, dict, types), name]
 
+
 def tcp_prop(prof, pkt, name, types=False):
+    """Returns the path of a TCP packet. types denotes whether this path
+       should include the type of each path element, i.e. if it is supposed
+       to be used with profile.set_data."""
     from scapy.all import TCP
     return ip_layer4_prop(prof, pkt, TCP, 'TCP', name, types)
 
+
 def udp_prop(prof, pkt, name, types=False):
+    """Returns the path of a UDP packet. types denotes whether this path
+       should include the type of each path element, i.e. if it is supposed
+       to be used with profile.set_data."""
     from scapy.all import UDP
     return ip_layer4_prop(prof, pkt, UDP, 'UDP', name, types)
 
+
 def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
+    """Returns the path of a UDP/TCP packet. layer denotes the scapy layer
+       object whilst layer_name is the canonical name of the layer. types
+       denotes whether this path should include the type of each path element,
+       i.e. if it is supposed to be used with profile.set_data."""
     from scapy.all import IP
     ip = pkt.getlayer(IP)
     layer4 = pkt.getlayer(layer)
@@ -263,27 +292,21 @@ def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
     else:
         return [typechoice(pkt.src, dict, types), typechoice(ip.src, dict, types), typechoice(layer_name+str(layer4.sport), dict, types), name]
 
+
 def typechoice(value, type, use_type):
+    """Retrieves either the value or a tuple (value, type)"""
     if use_type:
         return (value, type)
     else:
         return value
 
+
 def profile_data(profile, path, default):
+    """Retrieves profile data with a fallback default value"""
     res = profile.get_data(path)
     if res is None:
         return default
     return res
-
-
-
-
-
-
-
-
-
-
 
 
 # --------------------------------- PROFILING ------------------------------ #
@@ -291,11 +314,13 @@ PROFILES = {}
 IGNORE_LIST = []
 
 class Profile:
+    """Representation of a device profile"""
 
     PROFILERS = []
     ANALYSERS = []
 
     def __init__(self, id):
+        """Initiates the profile object"""
         self._id = id
         self._data = {}
         self.profiling_length = 3600*24    # one day
@@ -305,18 +330,21 @@ class Profile:
     def is_profiling(self):
         """Checks whether the profile is in the training phase"""
         return datetime.now() < self._profiling_end
-        
+
     def id(self):
         """Retrieves the unique ID of this profile"""
         return self._id
 
     def get_data(self, path):
+        """Retrieves data from a path (a list of hierarchical names)"""
         data = self._data
         for prop in path:
             data = Profile.get_prop(data, prop, create_if_needed=False)
         return data
 
     def set_data(self, path, value):
+        """Sets data on an annotated path. The path should be a list on the
+           form [(name, type), (name, type), .... , (name, type), name]"""
         data = self._data
         # Traverse data
         for prop, cls in path[:-1]:
@@ -328,11 +356,13 @@ class Profile:
         data[path[-1]] = value
 
     def __str__(self):
+        """Retrieves a string representation of this object"""
         return str(self._data)
-        # return Profile.tree_to_string('Profile', self._data)
 
     @staticmethod
     def get_prop(obj, prop, new_cls=None, create_if_needed=True):
+        """Retrieves a property of an object and might create it if needed.
+           The parameter new_cls() is required if create_if_needed is True"""
         cls = type(obj)
         if cls == dict:
             if create_if_needed and obj.get(prop) is None:
@@ -349,6 +379,7 @@ class Profile:
 
     @staticmethod
     def tree_to_string(name, data, level=0):
+        """Converts this object to a string representation for debugging"""
         res = '  '*level + str(name) + ': '
         if type(data) == dict:
             res += '\n'
@@ -365,17 +396,17 @@ class Profile:
 
     @staticmethod
     def add_profiler(profiler):
-        """Input should be on the form (condition, [(save_property, value_func)])"""
+        """Adds a profiler to all profiles. Profilers should be on the form
+           (condition, [(save_property, value_func)])"""
         if profiler not in Profile.PROFILERS:
             Profile.PROFILERS.append(profiler)
         
     @staticmethod
     def add_analyser(analyser):
-        """Input should be on the form (condition, analyse_func)"""
+        """Adds an analyser to all profiles. Analysers should be on the form
+           (condition, analyse_func)"""
         if analyser not in Profile.ANALYSERS:
             Profile.ANALYSERS.append(analyser)
-
-
 
 
 def handle_packet(packet):
@@ -395,6 +426,7 @@ def handle_packet(packet):
     
 
 def profile_packet(profile, packet):
+    """Profiles packets against matching profilers"""
     for condition, save_props in Profile.PROFILERS:
         if condition(profile, packet):
             for prop_func, value_func in save_props:
@@ -403,6 +435,7 @@ def profile_packet(profile, packet):
 
 
 def analyse_packet(profile, packet):
+    """Analyses packets according to matching analysers"""
     res = []
     for condition, analyse_func in Profile.ANALYSERS:
         if condition(profile, packet):
@@ -428,6 +461,8 @@ def get_profile(id):
 
         
 def get_communicators(packet):
+    """Retrieves the IDs of communicating parts from a packet.
+       NOTE: This is not modular atm."""
     from scapy.all import Ether
     if packet.haslayer(Ether):
         return (packet.src, packet.dst)

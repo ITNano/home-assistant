@@ -158,22 +158,19 @@ def async_load_device_data(hass):
     devices = yield from hass.components.device_tracker.async_load_config(
         os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
     for device in devices:
-        id = str(device.mac).lower()
-        DEVICES.update({id: {'entity_id': device.entity_id,
-                             'name': device.name}})
+        device_id = str(device.mac).lower()
+        DEVICES.update({device_id: {'entity_id': device.entity_id,
+                                    'name': device.name}})
 
         # Backwards compat (add devices already existing)
-        if PROFILES.get(id):
-            for prop in DEVICES[id]:
-                PROFILES.set_data([prop], DEVICES[id][prop])
+        if PROFILES.get(device_id):
+            for prop in DEVICES[device_id]:
+                PROFILES.set_data([prop], DEVICES[device_id][prop])
 
 
-def get_device_information(id):
+def get_device_information(device_id):
     """Retrieves device meta data"""
-    if DEVICES.get(id) is not None:
-        return DEVICES.get(id)
-    else:
-        return {'name': 'Unknown'}
+    return DEVICES.get(device_id, {'name': 'Unknown'})
 
 
 def on_network_capture(packet_list):
@@ -185,8 +182,8 @@ def on_network_capture(packet_list):
 
 
 def get_gateways():
-    """Retrieves the mac addresses of all network gateways on the device"""
-    """NOTE: This function applies only to Ethernet (only to exemplify)"""
+    """Retrieves the mac addresses of all network gateways on the device
+       NOTE: This function applies only to Ethernet (only to exemplify)"""
     cmd = (" ip neigh | grep \"$(ip route list | grep default | cut -d\\  -f3"
            " | uniq) \" | cut -d\\  -f5 | uniq ")
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
@@ -201,27 +198,23 @@ def add_profile_callbacks():
     eth_profiler = (lambda prof, pkt: pkt.haslayer(Ether),
                     [map_packet_prop(eth_prop, 'src', Ether, 'src'),
                      map_packet_prop(eth_prop, 'dst', Ether, 'dst'),
-                     transform_prop(eth_prop, 'count', 0, increase)]
-                    )
+                     transform_prop(eth_prop, 'count', 0, increase)])
     ip_profiler = (lambda prof, pkt: pkt.haslayer(IP),
                    [map_packet_prop(ip_prop, 'src', IP, 'src'),
                     map_packet_prop(ip_prop, 'dst', IP, 'dst'),
-                    transform_prop(ip_prop, 'count', 0, increase)]
-                   )
+                    transform_prop(ip_prop, 'count', 0, increase)])
     tcp_profiler = (lambda prof, pkt: pkt.haslayer(TCP),
                     [map_packet_prop(tcp_prop, 'src', IP, 'sport'),
                      map_packet_prop(tcp_prop, 'dst', IP, 'dport'),
                      transform_prop(tcp_prop, 'count', 0, increase),
-                     transform_prop(tcp_prop, 'maxsize', 0, max_size(TCP)),
-                     transform_prop(tcp_prop, 'minsize', 99999, min_size(TCP))]
-                    )
+                     transform_prop(tcp_prop, 'minsize', 99999, min_size(TCP)),
+                     transform_prop(tcp_prop, 'maxsize', 0, max_size(TCP))])
     udp_profiler = (lambda prof, pkt: pkt.haslayer(UDP),
                     [map_packet_prop(udp_prop, 'src', IP, 'sport'),
                      map_packet_prop(udp_prop, 'dst', IP, 'dport'),
                      transform_prop(udp_prop, 'count', 0, increase),
-                     transform_prop(udp_prop, 'maxsize', 0, max_size(UDP)),
-                     transform_prop(udp_prop, 'minsize', 99999, min_size(UDP))]
-                    )
+                     transform_prop(udp_prop, 'minsize', 99999, min_size(UDP)),
+                     transform_prop(udp_prop, 'maxsize', 0, max_size(UDP))])
     Profile.add_profiler(eth_profiler)
     Profile.add_profiler(ip_profiler)
     Profile.add_profiler(tcp_profiler)
@@ -238,26 +231,29 @@ def transform_prop(layer_func, prop, defval, func):
     """Profiler help function. Performs some sort of transformation of a
        property within a profile (e.g. counters, max/min values, ...)"""
     def val_func(prof, pkt):
+        """Applies prop from profile to the given function func(pkt, x)"""
         func(pkt, profile_data(prof, layer_func(prof, pkt, prop), defval))
-    return (lambda prof, pkt: layer_func(prof, pkt, prop, True), val_func)
+    return lambda prof, pkt: layer_func(prof, pkt, prop, True), val_func
 
 
-def increase(_, x):
+def increase(_, val):
     """Increases the value by 1"""
-    return x+1
+    return val+1
 
 
 def max_size(layer):
     """Retrieves a function which retrieves the maximum packet length"""
-    def func(pkt, x):
-        return max(x, len(pkt.getlayer(layer)))
+    def func(pkt, val):
+        """Retrieve the maximum packet length"""
+        return max(val, len(pkt.getlayer(layer)))
     return func
 
 
 def min_size(layer):
     """Retrieves a function which retrieves the minimum packet length"""
-    def func(pkt, x):
-        return min(x, len(pkt.getlayer(layer)))
+    def func(pkt, val):
+        """Retrieve the minimum packet length"""
+        return min(val, len(pkt.getlayer(layer)))
     return func
 
 
@@ -265,10 +261,8 @@ def eth_prop(prof, pkt, name, types=False):
     """Returns the path of an Ethernet packet. types denotes whether this path
        should include the type of each path element, i.e. if it is supposed
        to be used with profile.set_data."""
-    if pkt.src == prof.id():
-        return [typechoice(pkt.dst, dict, types), name]
-    else:
-        return [typechoice(pkt.src, dict, types), name]
+    mac = pkt.dst if pkt.src == prof.get_id() else pkt.src
+    return [typechoice(mac, dict, types), name]
 
 
 def ip_prop(prof, pkt, name, types=False):
@@ -276,13 +270,11 @@ def ip_prop(prof, pkt, name, types=False):
        should include the type of each path element, i.e. if it is supposed
        to be used with profile.set_data."""
     from scapy.all import IP
-    ip = pkt.getlayer(IP)
-    if pkt.src == prof.id():
-        return [typechoice(pkt.dst, dict, types),
-                typechoice(ip.dst, dict, types), name]
-    else:
-        return [typechoice(pkt.src, dict, types),
-                typechoice(ip.src, dict, types), name]
+    ip_layer = pkt.getlayer(IP)
+    mac = pkt.dst if pkt.src == prof.get_id() else pkt.src
+    ip_addr = ip_layer.dst if pkt.src == prof.get_id() else ip_layer.src
+    return [typechoice(mac, dict, types),
+            typechoice(ip_addr, dict, types), name]
 
 
 def tcp_prop(prof, pkt, name, types=False):
@@ -307,24 +299,19 @@ def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
        denotes whether this path should include the type of each path element,
        i.e. if it is supposed to be used with profile.set_data."""
     from scapy.all import IP
-    ip = pkt.getlayer(IP)
+    ip_layer = pkt.getlayer(IP)
     layer4 = pkt.getlayer(layer)
-    if pkt.src == prof.id():
-        return [typechoice(pkt.dst, dict, types),
-                typechoice(ip.dst, dict, types),
-                typechoice(layer_name+str(layer4.dport), dict, types), name]
-    else:
-        return [typechoice(pkt.src, dict, types),
-                typechoice(ip.src, dict, types),
-                typechoice(layer_name+str(layer4.sport), dict, types), name]
+    mac = pkt.dst if pkt.src == prof.get_id() else pkt.src
+    ip_addr = ip_layer.dst if pkt.src == prof.get_id() else ip_layer.src
+    l4_port = layer4.dport if pkt.src == prof.get_id() else layer4.sport
+    return [typechoice(mac, dict, types),
+            typechoice(ip_addr, dict, types),
+            typechoice(layer_name+l4_port, dict, types), name]
 
 
 def typechoice(value, cls, use_type):
     """Retrieves either the value or a tuple (value, cls)"""
-    if use_type:
-        return value, cls
-    else:
-        return value
+    return value, cls if use_type else value
 
 
 def profile_data(profile, path, default):
@@ -346,9 +333,9 @@ class Profile:
     PROFILERS = []
     ANALYSERS = []
 
-    def __init__(self, id):
+    def __init__(self, identifier):
         """Initiates the profile object"""
-        self._id = id
+        self._id = identifier
         self._data = {}
         self.profiling_length = 3600 * 24    # one day
         self._profiling_end = (datetime.now() +
@@ -358,7 +345,7 @@ class Profile:
         """Checks whether the profile is in the training phase"""
         return datetime.now() < self._profiling_end
 
-    def id(self):
+    def get_id(self):
         """Retrieves the unique ID of this profile"""
         return self._id
 
@@ -397,7 +384,7 @@ class Profile:
             return obj.get(prop)
         elif cls == list:
             if create_if_needed and prop >= len(obj):
-                for i in range(prop-len(obj)):
+                for _ in range(prop-len(obj)):
                     obj.append(None)
                 obj.append(new_cls())
             return obj[prop]
@@ -408,18 +395,18 @@ class Profile:
     def tree_to_string(name, data, level=0):
         """Converts this object to a string representation for debugging"""
         res = '  '*level + str(name) + ': '
-        if type(data) == dict:
+        if isinstance(data, dict):
             res += '\n'
             for prop in data:
                 res += Profile.tree_to_string(prop, data[prop], level+1)
             return res
-        elif type(data) == list:
+        elif isinstance(data, list):
             res += '\n'
-            for i in range(len(data)):
-                res += Profile.tree_to_string(str(i), data[i], level+1)
+            for i, val in enumerate(data):
+                res += Profile.tree_to_string(str(i), val, level+1)
             return res
-        else:
-            return res + str(data) + '\n'
+
+        return res + str(data) + '\n'
 
     @staticmethod
     def add_profiler(profiler):
@@ -476,15 +463,15 @@ def find_profiles(sender, receiver):
     return [r for r in res if r is not None]
 
 
-def get_profile(id):
+def get_profile(identifier):
     """Retrieves/creates the profile with the given ID"""
-    if id not in IGNORE_LIST:
-        if PROFILES.get(id) is None:
-            PROFILES[id] = Profile(id)
-            device_info = get_device_information(id)
+    if identifier not in IGNORE_LIST:
+        if PROFILES.get(identifier) is None:
+            PROFILES[identifier] = Profile(identifier)
+            device_info = get_device_information(identifier)
             for prop in device_info:
-                PROFILES[id].set_data([prop], device_info[prop])
-        return PROFILES.get(id)
+                PROFILES[identifier].set_data([prop], device_info[prop])
+        return PROFILES.get(identifier)
 
 
 def get_communicators(packet):
@@ -492,21 +479,21 @@ def get_communicators(packet):
        NOTE: This is not modular atm."""
     from scapy.all import Ether
     if packet.haslayer(Ether):
-        return (packet.src, packet.dst)
-    else:
-        return (None, None)
+        return packet.src, packet.dst
+
+    return None, None
 
 
-def ignore_device(id):
+def ignore_device(identifier):
     """Appends an ID to the profiling ignore list"""
-    IGNORE_LIST.append(id)
+    IGNORE_LIST.append(identifier)
 
 
 def save_profiles(filename):
     """Saves all current profiles to a savefile"""
     text = ("{" + ", ".join(["'" + str(p) + "': " + str(PROFILES[p])
                              for p in PROFILES]) + "}")
-    _LOGGER.info("Saving profile data: " + text.replace("'", '"'))
+    _LOGGER.info("Saving profile data: %s", text.replace("'", '"'))
     with open(filename, 'wb') as output:
         pickle.dump(PROFILES, output, pickle.HIGHEST_PROTOCOL)
 
@@ -514,10 +501,10 @@ def save_profiles(filename):
 def load_profiles(filename):
     """Loads saved profiles from a savefile"""
     try:
-        with open(filename, 'rb') as input:
+        with open(filename, 'rb') as infile:
             global PROFILES
-            PROFILES = pickle.load(input)
-    except FileNotFoundError as e:
+            PROFILES = pickle.load(infile)
+    except FileNotFoundError:
         print("WARNING: Cannot load entries from " + str(filename) + ".")
 
 

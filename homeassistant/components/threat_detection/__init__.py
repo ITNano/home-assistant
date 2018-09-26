@@ -294,6 +294,7 @@ def ipvx_prop(proto):
         ip_addr = ip_layer.dst if pkt.src == prof.get_id() else ip_layer.src
         return [typechoice(mac, dict, types),
                 typechoice(ip_addr, dict, types), name]
+    return ip_prop
 
 
 def tcp_prop(prof, pkt, name, types=False):

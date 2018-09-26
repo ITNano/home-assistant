@@ -192,6 +192,7 @@ def get_gateways():
         return str(output.decode()).splitlines()
 
 
+# ------------------------ PROFILERS and ANALYSERS ------------------------- #
 def add_profile_callbacks():
     """Create default profilers and analysers and activates them."""
     from scapy.all import Ether, IP, TCP, UDP

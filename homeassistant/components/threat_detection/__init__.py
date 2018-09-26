@@ -195,15 +195,19 @@ def get_gateways():
 # ------------------------ PROFILERS and ANALYSERS ------------------------- #
 def add_profile_callbacks():
     """Create default profilers and analysers and activates them."""
-    from scapy.all import Ether, IP, TCP, UDP
+    from scapy.all import Ether, IP, IPv6, TCP, UDP
     eth_profiler = (lambda prof, pkt: pkt.haslayer(Ether),
                     [map_packet_prop(eth_prop, 'src', Ether, 'src'),
                      map_packet_prop(eth_prop, 'dst', Ether, 'dst'),
                      transform_prop(eth_prop, 'count', 0, increase)])
     ip_profiler = (lambda prof, pkt: pkt.haslayer(IP),
-                   [map_packet_prop(ip_prop, 'src', IP, 'src'),
-                    map_packet_prop(ip_prop, 'dst', IP, 'dst'),
-                    transform_prop(ip_prop, 'count', 0, increase)])
+                   [map_packet_prop(ipvx_prop(IP), 'src', IP, 'src'),
+                    map_packet_prop(ipvx_prop(IP), 'dst', IP, 'dst'),
+                    transform_prop(ipvx_prop(IP), 'count', 0, increase)])
+    ipv6_profiler = (lambda prof, pkt: pkt.haslayer(IPv6),
+                   [map_packet_prop(ipvx_prop(IPv6), 'src', IPv6, 'src'),
+                    map_packet_prop(ipvx_prop(IPv6), 'dst', IPv6, 'dst'),
+                    transform_prop(ipvx_prop(IPv6), 'count', 0, increase)])
     tcp_profiler = (lambda prof, pkt: pkt.haslayer(TCP),
                     [map_packet_prop(tcp_prop, 'src', IP, 'sport'),
                      map_packet_prop(tcp_prop, 'dst', IP, 'dport'),
@@ -218,8 +222,14 @@ def add_profile_callbacks():
                      transform_prop(udp_prop, 'maxsize', 0, max_size(UDP))])
     Profile.add_profiler(eth_profiler)
     Profile.add_profiler(ip_profiler)
+    Profile.add_profiler(ipv6_profiler)
     Profile.add_profiler(tcp_profiler)
     Profile.add_profiler(udp_profiler)
+    
+    ddos_analyser_ipv4 = (ddos_condition(IP), check_ddos(IP))
+    ddos_analyser_ipv6 = (ddos_condition(IPv6), check_ddos(IPv6))
+    Profile.add_analyser(ddos_analyser_ipv4)
+    Profile.add_analyser(ddos_analyser_ipv6)
 
 
 def map_packet_prop(layer_func, prop, layer, prop_name):
@@ -271,18 +281,19 @@ def eth_prop(prof, pkt, name, types=False):
     return [typechoice(mac, dict, types), name]
 
 
-def ip_prop(prof, pkt, name, types=False):
-    """Return the path of an IP packet.
+def ipvx_prop(proto):
+    """Return a function to retrieve the path of an IPv4/IPv6 packet."""
+    def ip_prop(prof, pkt, name, types=False):
+        """Return the path of an IP packet.
 
-    types denotes whether this path should include the type of each path
-    element, i.e. if it is supposed to be used with profile.set_data.
-    """
-    from scapy.all import IP
-    ip_layer = pkt.getlayer(IP)
-    mac = pkt.dst if pkt.src == prof.get_id() else pkt.src
-    ip_addr = ip_layer.dst if pkt.src == prof.get_id() else ip_layer.src
-    return [typechoice(mac, dict, types),
-            typechoice(ip_addr, dict, types), name]
+        types denotes whether this path should include the type of each path
+        element, i.e. if it is supposed to be used with profile.set_data.
+        """
+        ip_layer = pkt.getlayer(proto)
+        mac = pkt.dst if pkt.src == prof.get_id() else pkt.src
+        ip_addr = ip_layer.dst if pkt.src == prof.get_id() else ip_layer.src
+        return [typechoice(mac, dict, types),
+                typechoice(ip_addr, dict, types), name]
 
 
 def tcp_prop(prof, pkt, name, types=False):
@@ -329,13 +340,27 @@ def typechoice(value, cls, use_type):
     return value, cls if use_type else value
 
 
-def profile_data(profile, path, default):
+def profile_data(profile, path, default=None):
     """Retrieve profile data with a fallback default value."""
     res = profile.get_data(path)
     if res is None:
         return default
     return res
 
+
+def botnet_condition(proto):
+    return lambda prof, pkt: pkt.haslayer(proto) and prof.get_id() == pkt.src
+
+
+def check_botnet(proto):
+    def check(prof, pkt):
+        records = profile_data(prof, ipvx_prop(proto)(prof, pkt, 'count'))
+        if not records:
+            ip = pkt.getlayer(proto)
+            return ("Potential botnet activity detected. Device %s sent data"
+                    "to %s at %s"
+                   ) % (ip.src, ip.dst, datetime.now().strftime('%H:%M'))
+    return check
 
 # --------------------------------- PROFILING ------------------------------ #
 PROFILES = {}

@@ -226,10 +226,10 @@ def add_profile_callbacks():
     Profile.add_profiler(tcp_profiler)
     Profile.add_profiler(udp_profiler)
     
-    ddos_analyser_ipv4 = (ddos_condition(IP), check_ddos(IP))
-    ddos_analyser_ipv6 = (ddos_condition(IPv6), check_ddos(IPv6))
-    Profile.add_analyser(ddos_analyser_ipv4)
-    Profile.add_analyser(ddos_analyser_ipv6)
+    botnet_analyser_ipv4 = (botnet_condition(IP), check_botnet(IP))
+    botnet_analyser_ipv6 = (botnet_condition(IPv6), check_botnet(IPv6))
+    Profile.add_analyser(botnet_analyser_ipv4)
+    Profile.add_analyser(botnet_analyser_ipv6)
 
 
 def map_packet_prop(layer_func, prop, layer, prop_name):

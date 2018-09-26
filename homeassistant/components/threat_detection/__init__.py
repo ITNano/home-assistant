@@ -196,26 +196,30 @@ def get_gateways():
 def add_profile_callbacks():
     """Create default profilers and analysers and activates them."""
     from scapy.all import Ether, IP, TCP, UDP
-    eth_profiler = (lambda prof, pkt: pkt.haslayer(Ether),
-                    [map_packet_prop(eth_prop, 'src', Ether, 'src'),
-                     map_packet_prop(eth_prop, 'dst', Ether, 'dst'),
-                     transform_prop(eth_prop, 'count', 0, increase)])
-    ip_profiler = (lambda prof, pkt: pkt.haslayer(IP),
-                   [map_packet_prop(ip_prop, 'src', IP, 'src'),
-                    map_packet_prop(ip_prop, 'dst', IP, 'dst'),
-                    transform_prop(ip_prop, 'count', 0, increase)])
-    tcp_profiler = (lambda prof, pkt: pkt.haslayer(TCP),
-                    [map_packet_prop(tcp_prop, 'src', IP, 'sport'),
-                     map_packet_prop(tcp_prop, 'dst', IP, 'dport'),
-                     transform_prop(tcp_prop, 'count', 0, increase),
-                     transform_prop(tcp_prop, 'minsize', 99999, min_size(TCP)),
-                     transform_prop(tcp_prop, 'maxsize', 0, max_size(TCP))])
-    udp_profiler = (lambda prof, pkt: pkt.haslayer(UDP),
-                    [map_packet_prop(udp_prop, 'src', IP, 'sport'),
-                     map_packet_prop(udp_prop, 'dst', IP, 'dport'),
-                     transform_prop(udp_prop, 'count', 0, increase),
-                     transform_prop(udp_prop, 'minsize', 99999, min_size(UDP)),
-                     transform_prop(udp_prop, 'maxsize', 0, max_size(UDP))])
+    eth_profiler = (lambda prof: True,
+                    (lambda prof, pkt: pkt.haslayer(Ether),
+                     [map_packet_prop(eth_prop, 'src', Ether, 'src'),
+                      map_packet_prop(eth_prop, 'dst', Ether, 'dst'),
+                      transform_prop(eth_prop, 'count', 0, increase)]))
+    ip_profiler = (lambda prof: True,
+                   (lambda prof, pkt: pkt.haslayer(IP),
+                    [map_packet_prop(ip_prop, 'src', IP, 'src'),
+                     map_packet_prop(ip_prop, 'dst', IP, 'dst'),
+                     transform_prop(ip_prop, 'count', 0, increase)]))
+    tcp_profiler = (lambda prof: True,
+                    (lambda prof, pkt: pkt.haslayer(TCP),
+                     [map_packet_prop(tcp_prop, 'src', IP, 'sport'),
+                      map_packet_prop(tcp_prop, 'dst', IP, 'dport'),
+                      transform_prop(tcp_prop, 'count', 0, increase),
+                      transform_prop(tcp_prop, 'minsize', 99999, min_size(TCP)),
+                      transform_prop(tcp_prop, 'maxsize', 0, max_size(TCP))]))
+    udp_profiler = (lambda prof: True,
+                    (lambda prof, pkt: pkt.haslayer(UDP),
+                     [map_packet_prop(udp_prop, 'src', IP, 'sport'),
+                      map_packet_prop(udp_prop, 'dst', IP, 'dport'),
+                      transform_prop(udp_prop, 'count', 0, increase),
+                      transform_prop(udp_prop, 'minsize', 99999, min_size(UDP)),
+                      transform_prop(udp_prop, 'maxsize', 0, max_size(UDP))]))
     Profile.add_profiler(eth_profiler)
     Profile.add_profiler(ip_profiler)
     Profile.add_profiler(tcp_profiler)
@@ -355,6 +359,14 @@ class Profile:
         self.profiling_length = 3600 * 24    # one day
         self._profiling_end = (datetime.now() +
                                timedelta(seconds=self.profiling_length))
+        self._profilers = Profile.get_aop_list(self, Profile.PROFILERS)
+        self._analysers = Profile.get_aop_list(self, Profile.ANALYSERS)
+
+    def get_profilers(self):
+        return self._profilers
+
+    def get_analysers(self):
+        return self._analysers
 
     def is_profiling(self):
         """Check whether the profile is in the training phase."""
@@ -447,6 +459,11 @@ class Profile:
         if analyser not in Profile.ANALYSERS:
             Profile.ANALYSERS.append(analyser)
 
+    @staticmethod
+    def get_aop_list(profile, aop_list):
+        """Return the list with entries matching the selector function."""
+        return [entry for selector, entry in aop_list if selector(profile)]
+
 
 def handle_packet(packet):
     """Handle incoming packets and route them to their destination."""
@@ -466,7 +483,7 @@ def handle_packet(packet):
 
 def profile_packet(profile, packet):
     """Profile packets against matching profilers."""
-    for condition, save_props in Profile.PROFILERS:
+    for condition, save_props in profile.get_profilers():
         if condition(profile, packet):
             for prop_func, value_func in save_props:
                 profile.set_data(prop_func(profile, packet),
@@ -476,7 +493,7 @@ def profile_packet(profile, packet):
 def analyse_packet(profile, packet):
     """Analyse packets according to matching analysers."""
     res = []
-    for condition, analyse_func in Profile.ANALYSERS:
+    for condition, analyse_func in profile.get_analysers():
         if condition(profile, packet):
             res.append(analyse_func(profile, packet))
     return res

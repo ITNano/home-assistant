@@ -293,8 +293,6 @@ def ipvx_prop(proto):
         ip_layer = pkt.getlayer(proto)
         mac = pkt.dst if pkt.src == prof.get_id() else pkt.src
         ip_addr = ip_layer.dst if pkt.src == prof.get_id() else ip_layer.src
-        _LOGGER.info("Using mac: "+mac+", ip: "+ip_addr)
-        _LOGGER.info("Typechoice ("+str(types)+"): "+str(typechoice(mac, dict, types)))
         return [typechoice(mac, dict, types),
                 typechoice(ip_addr, dict, types), name]
     return ip_prop
@@ -341,7 +339,7 @@ def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
 
 def typechoice(value, cls, use_type):
     """Retrieve either the value or a tuple (value, cls)."""
-    return value, cls if use_type else value
+    return (value, cls) if use_type else value
 
 
 def profile_data(profile, path, default=None):

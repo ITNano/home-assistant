@@ -490,6 +490,7 @@ class Profile:
             if create_if_needed:
                 if prop == '+':
                     obj.append(new_cls())
+                    return obj[-1]
                 elif prop >= len(obj):
                     for _ in range(prop-len(obj)):
                         obj.append(None)

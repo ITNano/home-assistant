@@ -7,7 +7,7 @@ todo add where to find documentation for the component.
 
 import subprocess
 import os
-from os.path import dirname, basename, isfile, join
+from os.path import dirname, basename, isfile, join, getsize
 from threading import Lock
 from datetime import datetime, timedelta
 import asyncio
@@ -614,9 +614,11 @@ class PacketCapturer:
 
             from scapy.all import rdpcap, PacketList
             path = dirname(event.src_path)
-            # Ignore directories and the most recent created file
-            all_files = [f for f in os.listdir(path) if isfile(join(path, f))]
-            files = list(filter(pcap_filter(event.src_path), all_files))
+            # Ignore directories and empty files
+            all_files = [f for f in os.listdir(path)
+                         (if isfile(join(path, f)) and
+                          getsize(join(path, f)) > 0)]
+            files = list(filter(lambda f: f.endswith('.pcap'), all_files))
             # Parse data from pcap format
             _LOGGER.info("Reading network files")
             data = [safe_exc(rdpcap, [], join(path, file)) for file in files]

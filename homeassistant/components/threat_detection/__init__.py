@@ -404,7 +404,7 @@ def check_botnet(proto):
         if not records:
             dns_entries = profile_data(prof, ['dns'], {})
             remote_ip = pkt.getlayer(proto).dst
-            if [ip for ip in entry for entry in dns_entries.values() if ip == remote_ip]:
+            if [ip for entry in dns_entries.values() for ip in entry if ip == remote_ip]:
                 # Service has changed IP. Update profile.
                 profile_packet(prof, pkt)
             else:

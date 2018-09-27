@@ -489,6 +489,7 @@ def handle_packet(packet):
             profile_packet(profile, packet)
         else:
             res.extend(analyse_packet(profile, packet))
+    _LOGGER.info("Result after scan: "+str(res))
     return [r for r in res if r is not None]
 
 

@@ -363,7 +363,6 @@ def check_botnet(proto):
     def check(prof, pkt):
         records = profile_data(prof, ipvx_prop(proto)(prof, pkt, 'count'))
         if not records:
-            _LOGGER.info("Detected breach")
             ip = pkt.getlayer(proto)
             return ("Potential botnet activity detected. Device %s sent data"
                     "to %s at %s"
@@ -406,7 +405,6 @@ class Profile:
     def reload_analysers(self):
         """Reload all analysers to keep up to date"""
         self._analysers = Profile.get_aop_list(self, Profile.ANALYSERS)
-        _LOGGER.info("Device "+str(self.get_id())+" has "+str(len(self._analysers))+" analysers")
 
     def is_profiling(self):
         """Check whether the profile is in the training phase."""
@@ -599,7 +597,7 @@ def load_profiles(filename):
     try:
         with open(filename, 'rb') as infile:
             global PROFILES
-            PROFILES = [p for p in pickle.load(infile) if p.get_id() is not None]
+            PROFILES = pickle.load(infile)
             # Make sure profilers/analysers are up-to-date
             for profile in PROFILES.values():
                 profile.reload_profilers()

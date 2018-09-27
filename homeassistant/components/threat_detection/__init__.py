@@ -380,7 +380,7 @@ class Profile:
     PROFILERS = []
     ANALYSERS = []
 
-    def __init__(self, identifier, profiling_length=86400):
+    def __init__(self, identifier, profiling_length=300): # 86400
         """Initiate the profile object."""
         self._id = identifier
         self._data = {}

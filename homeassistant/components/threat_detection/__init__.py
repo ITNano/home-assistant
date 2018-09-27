@@ -369,9 +369,10 @@ def get_dns_profiler():
     def selector(prof):
         return True
     def condition(prof, pkt):
-        domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
-        return (pkt.haslayer(DNSRR) and prof.get_id() == pkt.dst and
-                (prof.is_profiling() or profile_data(prof, ['dns', domain])))
+        if pkt.haslayer(DNSRR):
+            domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
+            return (prof.get_id() == pkt.dst and (prof.is_profiling() or
+                    profile_data(prof, ['dns', domain])))
     def prop(prof, pkt):
         domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
         return [('dns', dict), (domain, list), '+']

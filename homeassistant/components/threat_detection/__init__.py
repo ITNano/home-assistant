@@ -638,11 +638,3 @@ def safe_exc(func, default, *args):
     except Exception:
         _LOGGER.warning("Caught an exception for Threat Detection.")
         return default
-
-
-def pcap_filter(ignore_file):
-    """Create filter to use for PacketCaptureHandler."""
-    def filter_func(file):
-        """Filter to select .pcap files and ignore the given file."""
-        return file.endswith('.pcap') and file != basename(ignore_file)
-    return filter_func

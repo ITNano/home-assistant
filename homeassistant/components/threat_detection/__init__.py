@@ -488,7 +488,7 @@ class Profile:
         if profiler not in Profile.PROFILERS:
             Profile.PROFILERS.append(profiler)
             # Reload profiler list for each client
-            for profile in PROFILES:
+            for profile in PROFILES.values():
                 profile.reload_profilers()
 
     @staticmethod
@@ -500,7 +500,7 @@ class Profile:
         if analyser not in Profile.ANALYSERS:
             Profile.ANALYSERS.append(analyser)
             # Reload analyser list for each client
-            for profile in PROFILES:
+            for profile in PROFILES.values():
                 profile.reload_analysers()
 
     @staticmethod

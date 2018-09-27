@@ -590,7 +590,7 @@ def load_profiles(filename):
             global PROFILES
             PROFILES = pickle.load(infile)
             # Make sure profilers/analysers are up-to-date
-            for profile in PROFILES:
+            for profile in PROFILES.values():
                 profile.reload_poa()
     except FileNotFoundError:
         print("WARNING: Cannot load entries from " + str(filename) + ".")

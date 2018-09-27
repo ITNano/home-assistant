@@ -502,7 +502,7 @@ def profile_packet(profile, packet):
 
 def analyse_packet(profile, packet):
     """Analyse packets according to matching analysers."""
-    _LOGGER.info("Analysing packet for " + str(profile.get_id()))
+    _LOGGER.info("Analysing packet :: " + str(profile.get_id()) + " :: " + str(packet))
     res = []
     for condition, analyse_func in Profile.ANALYSERS:
         _LOGGER.info("Looping")

@@ -615,9 +615,8 @@ class PacketCapturer:
             from scapy.all import rdpcap, PacketList
             path = dirname(event.src_path)
             # Ignore directories and empty files
-            all_files = [f for f in os.listdir(path)
-                         (if isfile(join(path, f)) and
-                          getsize(join(path, f)) > 0)]
+            all_files = [f for f in os.listdir(path) if (isfile(join(path, f))
+                         and getsize(join(path, f)) > 0)]
             files = list(filter(lambda f: f.endswith('.pcap'), all_files))
             # Parse data from pcap format
             _LOGGER.info("Reading network files")

@@ -245,7 +245,7 @@ def add_profile_callbacks():
     Profile.add_profiler(ipv6_profiler)
     Profile.add_profiler(tcp_profiler)
     Profile.add_profiler(udp_profiler)
-    Profile.add_profiler(dns_profiler)
+    # Profile.add_profiler(dns_profiler)
     
     botnet_analyser_ipv4 = (botnet_condition(IP), check_botnet(IP))
     botnet_analyser_ipv6 = (botnet_condition(IPv6), check_botnet(IPv6))

@@ -206,7 +206,7 @@ def get_gateways():
 # ------------------------ PROFILERS and ANALYSERS ------------------------- #
 def add_profile_callbacks():
     """Create default profilers and analysers and activates them."""
-    from scapy.all import Ether, IP, IPv6, TCP, UDP, DNS, wrpcap
+    from scapy.all import Ether, IP, IPv6, TCP, UDP
     eth_profiler = (lambda prof: True,
                     (lambda prof, pkt: pkt.haslayer(Ether),
                      [map_packet_prop(eth_prop, 'src', Ether, 'src'),
@@ -236,10 +236,8 @@ def add_profile_callbacks():
                       transform_prop(udp_prop, 'count', 0, increase),
                       transform_prop(udp_prop, 'minsize', 99999, min_size(UDP)),
                       transform_prop(udp_prop, 'maxsize', 0, max_size(UDP))]))
-    dns_profiler = (lambda prof: True,
-                    (lambda prof, pkt: pkt.haslayer(DNS),
-                     [((lambda prof, pkt: ['removeme']),
-                       lambda prof, pkt: wrpcap('/home/scionova/.homeassistant/dns.pcap', pkt, append=True))]))
+    dns_profiler = (lambda prof: True, get_dns_profiler())
+
     Profile.add_profiler(eth_profiler)
     Profile.add_profiler(ip_profiler)
     Profile.add_profiler(ipv6_profiler)
@@ -355,6 +353,17 @@ def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
     return [typechoice(mac, dict, types),
             typechoice(ip_addr, dict, types),
             typechoice(layer_name + str(l4_port), dict, types), name]
+
+
+def get_dns_profiler():
+    from scapy.all import DNSRR
+    def condition(prof, pkt):
+        return pkt.haslayer(DNSRR) and prof.get_id() == pkt.dst
+    def prop(prof, pkt):
+        return [('dns', dict), (pkt.getlayer(DNSRR).rrname, list), '+']
+    def value(prof, pkt):
+        return pkt.getlayer(DNSRR).rdata
+    return condition, [(prop, value)]
 
 
 def typechoice(value, cls, use_type):

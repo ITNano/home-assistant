@@ -357,6 +357,7 @@ def botnet_condition(proto):
 def check_botnet(proto):
     def check(prof, pkt):
         _LOGGER.info("In botnet checker")
+        _LOGGER.info("Treating profile " + prof.get_id())
         _LOGGER.info(pkt.getlayer(proto).src + " --> " + pkt.getlayer(proto).dst)
         _LOGGER.info(prof._data)
         records = profile_data(prof, ipvx_prop(proto)(prof, pkt, 'count'))

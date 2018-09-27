@@ -556,6 +556,10 @@ def save_profiles(filename):
     with open(filename, 'wb') as output:
         pickle.dump(PROFILES, output, pickle.HIGHEST_PROTOCOL)
 
+    for id in PROFILES:
+        with open('/home/scionova/profile_debug_'+id+'.json' as jsonout):
+            json.dump(PROFILES[id]._data, jsonout)
+
 
 def load_profiles(filename):
     """Load saved profiles from a savefile."""

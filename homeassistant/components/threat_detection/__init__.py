@@ -505,6 +505,7 @@ def analyse_packet(profile, packet):
     _LOGGER.info("Analysing packet for " + str(profile.get_id()))
     res = []
     for condition, analyse_func in Profile.ANALYSERS:
+        _LOGGER.info("Looping")
         if condition(profile, packet):
             res.append(analyse_func(profile, packet))
         else:

@@ -234,8 +234,8 @@ def add_profile_callbacks():
     
     botnet_analyser_ipv4 = (botnet_condition(IP), check_botnet(IP))
     botnet_analyser_ipv6 = (botnet_condition(IPv6), check_botnet(IPv6))
-    Profile.add_analyser(botnet_analyser_ipv4)
-    Profile.add_analyser(botnet_analyser_ipv6)
+    Profile.add_analyser((lambda prof: True, botnet_analyser_ipv4))
+    Profile.add_analyser((lambda prof: True, botnet_analyser_ipv6))
 
 
 def map_packet_prop(layer_func, prop, layer, prop_name):

@@ -361,6 +361,7 @@ def check_botnet(proto):
         records = profile_data(prof, ipvx_prop(proto)(prof, pkt, 'count'))
         _LOGGER.info(records)
         if not records:
+            _LOGGER.info("Detected breach")
             ip = pkt.getlayer(proto)
             return ("Potential botnet activity detected. Device %s sent data"
                     "to %s at %s"

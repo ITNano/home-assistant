@@ -558,6 +558,8 @@ def save_profiles(filename):
         pickle.dump(PROFILES, output, pickle.HIGHEST_PROTOCOL)
 
     for id, profile in PROFILES.items():
+        if id is None:
+            id = '__None__'
         _LOGGER.info("Exporting profile with ID " + id)
         with open('/home/scionova/.homeassistant/profile_debug_'+id.replace(':', '.')+'.json', 'w') as jsonout:
             json.dump(profile._data, jsonout)

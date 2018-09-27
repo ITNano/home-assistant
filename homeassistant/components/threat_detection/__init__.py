@@ -252,8 +252,8 @@ def transform_prop(layer_func, prop, defval, func):
     """
     def val_func(prof, pkt):
         """Apply prop from profile to the given function func(pkt, x)."""
-        func(pkt, profile_data(prof, layer_func(prof, pkt, prop), defval))
-    return lambda prof, pkt: layer_func(prof, pkt, prop, True), val_func
+        return func(pkt, profile_data(prof, layer_func(prof, pkt, prop), defval))
+    return (lambda prof, pkt: layer_func(prof, pkt, prop, True)), val_func
 
 
 def increase(_, val):

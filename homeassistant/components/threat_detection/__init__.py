@@ -402,7 +402,7 @@ class Profile:
         """Reload all profilers and analysers to keep up to date"""
         self._profilers = Profile.get_aop_list(self, Profile.PROFILERS)
         self._analysers = Profile.get_aop_list(self, Profile.ANALYSERS)
-        _LOGGER.info("Device "+self._id+" has "+str(len(self._analysers))+" analysers")
+        _LOGGER.info("Device "+str(self.get_id())+" has "+str(len(self._analysers))+" analysers")
 
     def is_profiling(self):
         """Check whether the profile is in the training phase."""

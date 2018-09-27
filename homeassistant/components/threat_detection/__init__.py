@@ -60,8 +60,8 @@ def async_setup(hass, config=None):
     CAPTURER = PacketCapturer(join(hass.config.config_dir, "traces"))
     CAPTURER.add_callback(on_network_capture)
     # Setup profiling
-    load_profiles(join(hass.config.config_dir, STORAGE_NAME))
     add_profile_callbacks()
+    load_profiles(join(hass.config.config_dir, STORAGE_NAME))
 
     def store_profiles(event):
         """Store profiling data in home assistant conf dir."""
@@ -388,7 +388,8 @@ class Profile:
         self.profiling_length = 3600 * 24    # one day
         self._profiling_end = (datetime.now() +
                                timedelta(seconds=self.profiling_length))
-        self.reload_poa()
+        self.reload_profilers()
+        self.reload_analysers()
 
     def get_profilers(self):
         """Retrieve the profilers of the profile"""
@@ -398,9 +399,12 @@ class Profile:
         """Retrieve the analysers of the profile"""
         return self._analysers
 
-    def reload_poa(self):
-        """Reload all profilers and analysers to keep up to date"""
+    def reload_profilers(self):
+        """Reload all profilers to keep up to date"""
         self._profilers = Profile.get_aop_list(self, Profile.PROFILERS)
+
+    def reload_analysers(self):
+        """Reload all analysers to keep up to date"""
         self._analysers = Profile.get_aop_list(self, Profile.ANALYSERS)
         _LOGGER.info("Device "+str(self.get_id())+" has "+str(len(self._analysers))+" analysers")
 
@@ -485,6 +489,9 @@ class Profile:
         """
         if profiler not in Profile.PROFILERS:
             Profile.PROFILERS.append(profiler)
+            # Reload profiler list for each client
+            for profile in PROFILES:
+                profile.reload_profilers()
 
     @staticmethod
     def add_analyser(analyser):
@@ -494,6 +501,9 @@ class Profile:
         """
         if analyser not in Profile.ANALYSERS:
             Profile.ANALYSERS.append(analyser)
+            # Reload analyser list for each client
+            for profile in PROFILES:
+                profile.reload_analysers()
 
     @staticmethod
     def get_aop_list(profile, aop_list):
@@ -589,10 +599,11 @@ def load_profiles(filename):
     try:
         with open(filename, 'rb') as infile:
             global PROFILES
-            PROFILES = pickle.load(infile)
+            PROFILES = [p for p in pickle.load(infile) if p.get_id() is not None]
             # Make sure profilers/analysers are up-to-date
             for profile in PROFILES.values():
-                profile.reload_poa()
+                profile.reload_profilers()
+                profile.reload_analysers()
     except FileNotFoundError:
         print("WARNING: Cannot load entries from " + str(filename) + ".")
 

@@ -237,15 +237,15 @@ def add_profile_callbacks():
                       transform_prop(udp_prop, 'minsize', 99999, min_size(UDP)),
                       transform_prop(udp_prop, 'maxsize', 0, max_size(UDP))]))
     dns_profiler = (lambda prof: True,
-                     (lambda prof, pkt: pkt.haslayer(DNS),
-                      [(lambda prof, pkt: ['removeme']),
-                        lambda prof, pkt: wrpcap('/home/scionova/.homeassistant/dns.pcap', pkt, append=True)]))
+                    (lambda prof, pkt: pkt.haslayer(DNS),
+                     [((lambda prof, pkt: ['removeme']),
+                       lambda prof, pkt: wrpcap('/home/scionova/.homeassistant/dns.pcap', pkt, append=True))]))
     Profile.add_profiler(eth_profiler)
     Profile.add_profiler(ip_profiler)
     Profile.add_profiler(ipv6_profiler)
     Profile.add_profiler(tcp_profiler)
     Profile.add_profiler(udp_profiler)
-    # Profile.add_profiler(dns_profiler)
+    Profile.add_profiler(dns_profiler)
     
     botnet_analyser_ipv4 = (botnet_condition(IP), check_botnet(IP))
     botnet_analyser_ipv6 = (botnet_condition(IPv6), check_botnet(IPv6))

@@ -7,6 +7,7 @@ todo add where to find documentation for the component.
 
 import subprocess
 import os
+import json
 from os.path import dirname, basename, isfile, join, getsize
 from threading import Lock
 from datetime import datetime, timedelta
@@ -420,7 +421,7 @@ class Profile:
 
     def __str__(self):
         """Retrieve a string representation of this object."""
-        return str(self._data)
+        return json.dumps(self._data)
 
     @staticmethod
     def get_prop(obj, prop, new_cls=None, create_if_needed=True):

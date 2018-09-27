@@ -579,7 +579,7 @@ def get_profile(identifier):
     if identifier not in IGNORE_LIST:
         if PROFILES.get(identifier) is None:
             _LOGGER.info("Adding TD profile for " + str(identifier) + 
-                         ". Profiling length: " + PROFILING_TIME + "s")
+                         ". Profiling length: " + str(PROFILING_TIME) + "s")
             PROFILES[identifier] = Profile(identifier, PROFILING_TIME)
             device_info = get_device_information(identifier)
             for prop in device_info:

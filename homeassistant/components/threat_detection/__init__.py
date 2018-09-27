@@ -258,7 +258,6 @@ def transform_prop(layer_func, prop, defval, func):
 
 def increase(_, val):
     """Increase the received value by 1."""
-    _LOGGER.info("Should increase "+str(val)+".")
     return val+1
 
 

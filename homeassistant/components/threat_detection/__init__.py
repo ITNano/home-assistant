@@ -18,6 +18,7 @@ import voluptuous as vol
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.entity_component import EntityComponent
 import homeassistant.const as const
+import homeassistant.helpers.config_validation as cv
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,16 +29,21 @@ ENTITIY_ID_FORMAT = DOMAIN + ".{}"
 DEPENDENCIES = []
 
 # Configuration input
-# -- No config available yet.
+CONF_PROFILING_TIME = 'profiling_time'
+DEF_PROFILING_TIME = 86400
 # Here we need to add everything that is required from the conf-file if we
 # need some input from the user.
 CONFIG_SCHEMA = vol.Schema({
-    DOMAIN: vol.Schema({})
+    DOMAIN: vol.Schema({
+        vol.Optional(CONF_PROFILING_TIME,
+                     default=DEF_PROFILING_TIME): cv.int,
+    })
 }, extra=vol.ALLOW_EXTRA)
 
 CAPTURER = None
 DEVICES = {}
 DETECTION_OBJ = None
+PROFILING_TIME = DEF_PROFILING_TIME
 STORAGE_NAME = 'td_profiles.pcl'
 KNOWN_DEVICES = 'known_devices.yaml'
 
@@ -47,6 +53,10 @@ def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     # yield from component.async_setup(config)
+
+    global PROFILING_TIME
+    PROFILING_TIME = config[DOMAIN].get(CONF_PROFILING_TIME,
+                                        DEF_PROFILING_TIME)
 
     yield from async_load_device_data(hass)
 
@@ -385,7 +395,7 @@ class Profile:
     PROFILERS = []
     ANALYSERS = []
 
-    def __init__(self, identifier, profiling_length=300): # 86400
+    def __init__(self, identifier, profiling_length=86400):
         """Initiate the profile object."""
         self._id = identifier
         self._data = {}
@@ -568,7 +578,7 @@ def get_profile(identifier):
     """Retrieve/create the profile with the given ID."""
     if identifier not in IGNORE_LIST:
         if PROFILES.get(identifier) is None:
-            PROFILES[identifier] = Profile(identifier)
+            PROFILES[identifier] = Profile(identifier, PROFILING_TIME)
             device_info = get_device_information(identifier)
             for prop in device_info:
                 PROFILES[identifier].set_data([prop], device_info[prop])

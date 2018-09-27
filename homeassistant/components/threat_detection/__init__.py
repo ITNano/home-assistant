@@ -477,12 +477,13 @@ class Profile:
         for prop, cls in path[:-1]:
             data = Profile.get_prop(data, prop, cls)
 
-        # Create container for data if not existant
-        Profile.get_prop(data, path[-1], type(value))
-        # Fill container with data (special case for list append)
+        # Fill container with value (special case for list append)
         if type(data) == list and path[-1] == '+':
             data.append(value)
         else:
+            # Create container for data if not existant
+            Profile.get_prop(data, path[-1], type(value))
+            # Fill it
             data[path[-1]] = value
 
     def __getstate__(self):

@@ -360,6 +360,7 @@ def check_botnet(proto):
         _LOGGER.info("Treating profile " + prof.get_id())
         _LOGGER.info(pkt.getlayer(proto).src + " --> " + pkt.getlayer(proto).dst)
         _LOGGER.info(prof._data)
+        _LOGGER.info(ipvx_prop(proto)(prof, pkt, 'count'))
         records = profile_data(prof, ipvx_prop(proto)(prof, pkt, 'count'))
         _LOGGER.info(records)
         if not records:

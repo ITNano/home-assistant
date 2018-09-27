@@ -388,10 +388,17 @@ def check_botnet(proto):
     def check(prof, pkt):
         records = profile_data(prof, ipvx_prop(proto)(prof, pkt, 'count'))
         if not records:
-            ip = pkt.getlayer(proto)
-            return ("Potential botnet activity detected. Device %s sent data"
-                    "to %s at %s"
-                   ) % (ip.src, ip.dst, datetime.now().strftime('%H:%M'))
+            dns_entries = profile_data(prof, ['dns'], {})
+            remote_ip = pkt.getlayer(proto).dst
+            if [ip for ip in entry for entry in dns_entries.values() if ip == remote_ip]:
+                # Service has changed IP. Update profile.
+                profile_packet(prof, pkt)
+            else:
+                # Botnet device detected
+                ip = pkt.getlayer(proto)
+                return ("Potential botnet activity detected. Device %s sent"
+                        " data to %s at %s"
+                       ) % (ip.src, ip.dst, datetime.now().strftime('%H:%M'))
     return check
 
 # --------------------------------- PROFILING ------------------------------ #

@@ -293,6 +293,8 @@ def ipvx_prop(proto):
         ip_layer = pkt.getlayer(proto)
         mac = pkt.dst if pkt.src == prof.get_id() else pkt.src
         ip_addr = ip_layer.dst if pkt.src == prof.get_id() else ip_layer.src
+        _LOGGER.info("Using mac: "+mac+", ip: "+ip)
+        _LOGGER.info("Typechoice: "+str(typechoice(mac, dict, types)))
         return [typechoice(mac, dict, types),
                 typechoice(ip_addr, dict, types), name]
     return ip_prop

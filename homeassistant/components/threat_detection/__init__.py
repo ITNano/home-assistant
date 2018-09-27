@@ -356,13 +356,7 @@ def botnet_condition(proto):
 
 def check_botnet(proto):
     def check(prof, pkt):
-        _LOGGER.info("In botnet checker")
-        _LOGGER.info("Treating profile " + prof.get_id())
-        _LOGGER.info(pkt.getlayer(proto).src + " --> " + pkt.getlayer(proto).dst)
-        _LOGGER.info(prof._data)
-        _LOGGER.info(ipvx_prop(proto)(prof, pkt, 'count'))
         records = profile_data(prof, ipvx_prop(proto)(prof, pkt, 'count'))
-        _LOGGER.info(records)
         if not records:
             _LOGGER.info("Detected breach")
             ip = pkt.getlayer(proto)
@@ -561,7 +555,6 @@ def save_profiles(filename):
     for id, profile in PROFILES.items():
         if id is None:
             id = '__None__'
-        _LOGGER.info("Exporting profile with ID " + id)
         with open('/home/scionova/.homeassistant/profile_debug_'+id.replace(':', '.')+'.json', 'w') as jsonout:
             json.dump(profile._data, jsonout)
 

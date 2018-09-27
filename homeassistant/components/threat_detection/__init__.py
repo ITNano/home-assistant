@@ -380,13 +380,12 @@ class Profile:
     PROFILERS = []
     ANALYSERS = []
 
-    def __init__(self, identifier):
+    def __init__(self, identifier, profiling_length=86400):
         """Initiate the profile object."""
         self._id = identifier
         self._data = {}
-        self.profiling_length = 3600 * 24    # one day
         self._profiling_end = (datetime.now() +
-                               timedelta(seconds=self.profiling_length))
+                               timedelta(seconds=profiling_length))
         self.reload_profilers()
         self.reload_analysers()
 
@@ -436,6 +435,14 @@ class Profile:
         Profile.get_prop(data, path[-1], type(value))
         # Fill container with data
         data[path[-1]] = value
+
+    def __getstate__(self):
+        return (self._id, self._data, self._profiling_end)
+
+    def __setstate__(self, state):
+        self._id, self._data, self._profiling_end = state
+        self.reload_profilers()
+        self.reload_analysers()
 
     def __str__(self):
         """Retrieve a string representation of this object."""
@@ -598,10 +605,6 @@ def load_profiles(filename):
         with open(filename, 'rb') as infile:
             global PROFILES
             PROFILES = pickle.load(infile)
-            # Make sure profilers/analysers are up-to-date
-            for profile in PROFILES.values():
-                profile.reload_profilers()
-                profile.reload_analysers()
     except FileNotFoundError:
         print("WARNING: Cannot load entries from " + str(filename) + ".")
 

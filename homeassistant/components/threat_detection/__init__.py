@@ -36,7 +36,7 @@ DEF_PROFILING_TIME = 86400
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Optional(CONF_PROFILING_TIME,
-                     default=DEF_PROFILING_TIME): cv.int,
+                     default=DEF_PROFILING_TIME): cv.positive_int,
     })
 }, extra=vol.ALLOW_EXTRA)
 

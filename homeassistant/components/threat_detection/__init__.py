@@ -421,7 +421,7 @@ class Profile:
 
     def __str__(self):
         """Retrieve a string representation of this object."""
-        return json.dumps(self._data)
+        return str(self._data)
 
     @staticmethod
     def get_prop(obj, prop, new_cls=None, create_if_needed=True):

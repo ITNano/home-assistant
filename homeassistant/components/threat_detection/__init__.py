@@ -478,10 +478,13 @@ class Profile:
                 obj[prop] = new_cls()
             return obj.get(prop)
         elif cls == list:
-            if create_if_needed and prop >= len(obj):
-                for _ in range(prop-len(obj)):
-                    obj.append(None)
-                obj.append(new_cls())
+            if create_if_needed:
+                if prop == '+':
+                    obj.append(new_cls())
+                elif prop >= len(obj):
+                    for _ in range(prop-len(obj)):
+                        obj.append(None)
+                    obj.append(new_cls())
             return obj[prop]
         else:
             return None

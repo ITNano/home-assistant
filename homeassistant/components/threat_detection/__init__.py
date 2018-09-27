@@ -207,36 +207,41 @@ def get_gateways():
 def add_profile_callbacks():
     """Create default profilers and analysers and activates them."""
     from scapy.all import Ether, IP, IPv6, TCP, UDP
-    eth_profiler = (lambda prof: True,
-                    (lambda prof, pkt: pkt.haslayer(Ether),
+    eth_profiler = {'device_selector': lambda prof: True,
+                    'condition': lambda prof, pkt: pkt.haslayer(Ether),
+                    'mappers':
                      [map_packet_prop(eth_prop, 'src', Ether, 'src'),
                       map_packet_prop(eth_prop, 'dst', Ether, 'dst'),
-                      transform_prop(eth_prop, 'count', 0, increase)]))
-    ip_profiler = (lambda prof: True,
-                   (lambda prof, pkt: pkt.haslayer(IP),
+                      transform_prop(eth_prop, 'count', 0, increase)]}
+    ip_profiler = {'device_selector': lambda prof: True,
+                   'condition': lambda prof, pkt: pkt.haslayer(IP),
+                   'mappers':
                     [map_packet_prop(ipvx_prop(IP), 'src', IP, 'src'),
                      map_packet_prop(ipvx_prop(IP), 'dst', IP, 'dst'),
-                     transform_prop(ipvx_prop(IP), 'count', 0, increase)]))
-    ipv6_profiler = (lambda prof: True,
-                     (lambda prof, pkt: pkt.haslayer(IPv6),
+                     transform_prop(ipvx_prop(IP), 'count', 0, increase)]}
+    ipv6_profiler = {'device_selector': lambda prof: True,
+                     'condition': lambda prof, pkt: pkt.haslayer(IPv6),
+                     'mappers':
                       [map_packet_prop(ipvx_prop(IPv6), 'src', IPv6, 'src'),
                        map_packet_prop(ipvx_prop(IPv6), 'dst', IPv6, 'dst'),
-                       transform_prop(ipvx_prop(IPv6), 'count', 0, increase)]))
-    tcp_profiler = (lambda prof: True,
-                    (lambda prof, pkt: pkt.haslayer(TCP),
+                       transform_prop(ipvx_prop(IPv6), 'count', 0, increase)]}
+    tcp_profiler = {'device_selector': lambda prof: True,
+                    'condition': lambda prof, pkt: pkt.haslayer(TCP),
+                    'mappers':
                      [map_packet_prop(tcp_prop, 'src', IP, 'sport'),
                       map_packet_prop(tcp_prop, 'dst', IP, 'dport'),
                       transform_prop(tcp_prop, 'count', 0, increase),
                       transform_prop(tcp_prop, 'minsize', 99999, min_size(TCP)),
-                      transform_prop(tcp_prop, 'maxsize', 0, max_size(TCP))]))
-    udp_profiler = (lambda prof: True,
-                    (lambda prof, pkt: pkt.haslayer(UDP),
+                      transform_prop(tcp_prop, 'maxsize', 0, max_size(TCP))]}
+    udp_profiler = {'device_selector': lambda prof: True,
+                    'condition': lambda prof, pkt: pkt.haslayer(UDP),
+                    'mappers':
                      [map_packet_prop(udp_prop, 'src', IP, 'sport'),
                       map_packet_prop(udp_prop, 'dst', IP, 'dport'),
                       transform_prop(udp_prop, 'count', 0, increase),
                       transform_prop(udp_prop, 'minsize', 99999, min_size(UDP)),
-                      transform_prop(udp_prop, 'maxsize', 0, max_size(UDP))]))
-    dns_profiler = (lambda prof: True, get_dns_profiler())
+                      transform_prop(udp_prop, 'maxsize', 0, max_size(UDP))]}
+    dns_profiler = get_dns_profiler()
 
     Profile.add_profiler(eth_profiler)
     Profile.add_profiler(ip_profiler)
@@ -245,10 +250,14 @@ def add_profile_callbacks():
     Profile.add_profiler(udp_profiler)
     Profile.add_profiler(dns_profiler)
     
-    botnet_analyser_ipv4 = (botnet_condition(IP), check_botnet(IP))
-    botnet_analyser_ipv6 = (botnet_condition(IPv6), check_botnet(IPv6))
-    Profile.add_analyser((lambda prof: True, botnet_analyser_ipv4))
-    Profile.add_analyser((lambda prof: True, botnet_analyser_ipv6))
+    botnet_analyser_ipv4 = {'device_selector': (lambda prof: True),
+                            'condition': botnet_condition(IP),
+                            'analyse_func': check_botnet(IP)}
+    botnet_analyser_ipv6 = {'device_selector': (lambda prof: True),
+                            'condition': botnet_condition(IPv6),
+                            'analyse_func': check_botnet(IPv6)}
+    Profile.add_analyser(botnet_analyser_ipv4)
+    Profile.add_analyser(botnet_analyser_ipv6)
 
 
 def map_packet_prop(layer_func, prop, layer, prop_name):
@@ -357,6 +366,8 @@ def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
 
 def get_dns_profiler():
     from scapy.all import DNSRR
+    def selector(prof):
+        return True
     def condition(prof, pkt):
         return pkt.haslayer(DNSRR) and prof.get_id() == pkt.dst
     def prop(prof, pkt):
@@ -364,7 +375,10 @@ def get_dns_profiler():
         return [('dns', dict), (domain, list), '+']
     def value(prof, pkt):
         return pkt.getlayer(DNSRR).rdata
-    return condition, [(prop, value)]
+    return {'device_selector': selector,
+            'condition': condition,
+            'mappers': [(prop, value)],
+            'run_always': True}
 
 
 def typechoice(value, cls, use_type):
@@ -550,9 +564,9 @@ class Profile:
                 profile.reload_analysers()
 
     @staticmethod
-    def get_aop_list(profile, aop_list):
+    def get_aop_list(profile, data_list):
         """Return the list with entries matching the selector function."""
-        return [entry for selector, entry in aop_list if selector(profile)]
+        return [entry for entry in data_list if entry['device_selector'](profile)]
 
 
 def handle_packet(packet):
@@ -567,6 +581,7 @@ def handle_packet(packet):
         if profiling:
             profile_packet(profile, packet)
         else:
+            profile_packet(profile, packet, only_inf=True)
             res.extend(analyse_packet(profile, packet))
 
     threats = [r for r in res if r is not None]
@@ -574,21 +589,22 @@ def handle_packet(packet):
         DETECTION_OBJ.add_threats(threats)
 
 
-def profile_packet(profile, packet):
+def profile_packet(profile, packet, only_inf=False):
     """Profile packets against matching profilers."""
-    for condition, save_props in profile.get_profilers():
-        if condition(profile, packet):
-            for prop_func, value_func in save_props:
-                profile.set_data(prop_func(profile, packet),
-                                 value_func(profile, packet))
+    for profiler in profile.get_profilers():
+        if not only_inf or profiler.get('run_always'):
+            if profiler['condition'](profile, packet):
+                for prop_func, value_func in profiler['mappers']:
+                    profile.set_data(prop_func(profile, packet),
+                                     value_func(profile, packet))
 
 
 def analyse_packet(profile, packet):
     """Analyse packets according to matching analysers."""
     res = []
-    for condition, analyse_func in profile.get_analysers():
-        if condition(profile, packet):
-            res.append(analyse_func(profile, packet))
+    for analyser in profile.get_analysers():
+        if analyser['condition'](profile, packet):
+            res.append(analyser['analyse_func'](profile, packet))
     return res
 
 

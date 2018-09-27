@@ -388,14 +388,20 @@ class Profile:
         self.profiling_length = 3600 * 24    # one day
         self._profiling_end = (datetime.now() +
                                timedelta(seconds=self.profiling_length))
-        self._profilers = Profile.get_aop_list(self, Profile.PROFILERS)
-        self._analysers = Profile.get_aop_list(self, Profile.ANALYSERS)
+        self.reload_poa()
 
     def get_profilers(self):
+        """Retrieve the profilers of the profile"""
         return self._profilers
 
     def get_analysers(self):
+        """Retrieve the analysers of the profile"""
         return self._analysers
+
+    def reload_poa(self):
+        """Reload all profilers and analysers to keep up to date"""
+        self._profilers = Profile.get_aop_list(self, Profile.PROFILERS)
+        self._analysers = Profile.get_aop_list(self, Profile.ANALYSERS)
 
     def is_profiling(self):
         """Check whether the profile is in the training phase."""
@@ -583,6 +589,9 @@ def load_profiles(filename):
         with open(filename, 'rb') as infile:
             global PROFILES
             PROFILES = pickle.load(infile)
+            # Make sure profilers/analysers are up-to-date
+            for profile in PROFILES:
+                profile.reload_poa()
     except FileNotFoundError:
         print("WARNING: Cannot load entries from " + str(filename) + ".")
 

@@ -355,6 +355,7 @@ def botnet_condition(proto):
 
 def check_botnet(proto):
     def check(prof, pkt):
+        _LOGGER.info("In botnet checker")
         records = profile_data(prof, ipvx_prop(proto)(prof, pkt, 'count'))
         if not records:
             ip = pkt.getlayer(proto)
@@ -501,10 +502,13 @@ def profile_packet(profile, packet):
 
 def analyse_packet(profile, packet):
     """Analyse packets according to matching analysers."""
+    _LOGGER.info("Analysing packet for " + str(profile.get_id()))
     res = []
     for condition, analyse_func in Profile.ANALYSERS:
         if condition(profile, packet):
             res.append(analyse_func(profile, packet))
+        else:
+            _LOGGER.info("Condition failed. Ignoring analysis module")
     return res
 
 

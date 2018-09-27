@@ -546,9 +546,6 @@ def ignore_device(identifier):
 
 def save_profiles(filename):
     """Save all current profiles to a savefile."""
-    text = ("{" + ", ".join(["'" + str(p) + "': " + str(PROFILES[p])
-                             for p in PROFILES]) + "}")
-    _LOGGER.info("Saving profile data: %s", text.replace("'", '"'))
     with open(filename, 'wb') as output:
         pickle.dump(PROFILES, output, pickle.HIGHEST_PROTOCOL)
 

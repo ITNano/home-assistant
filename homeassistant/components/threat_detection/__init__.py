@@ -374,7 +374,7 @@ def get_dns_profiler():
             data = profile_data(prof, ['dns', domain])
             return (prof.get_id() == pkt.dst and
                     (prof.is_profiling() or data) and
-                    (data is None or pkt.getlayer(DNSRR).rdata not in data)
+                    (data is None or pkt.getlayer(DNSRR).rdata not in data))
     def prop(prof, pkt):
         domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
         return [('dns', dict), (domain, list), '+']

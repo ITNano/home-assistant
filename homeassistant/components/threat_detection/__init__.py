@@ -200,6 +200,7 @@ def on_network_capture(packet_list):
 
 def on_network_meta_capture(packet_list):
     _LOGGER.info("Got %i meta packets", len(packet_list))
+    _LOGGER.info([(p.getlayer(Dot11Elt).info.decode('utf-8'), p.getlayer(RadioTap).dBm_AntSignal) for p in packet_list])
 
 
 def get_gateways():

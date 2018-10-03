@@ -41,6 +41,7 @@ CONFIG_SCHEMA = vol.Schema({
 }, extra=vol.ALLOW_EXTRA)
 
 CAPTURER = None
+META_CAPTURER = None
 DEVICES = {}
 DETECTION_OBJ = None
 PROFILING_TIME = DEF_PROFILING_TIME
@@ -69,6 +70,10 @@ def async_setup(hass, config=None):
     global CAPTURER
     CAPTURER = PacketCapturer(join(hass.config.config_dir, "traces"))
     CAPTURER.add_callback(on_network_capture)
+    global META_CAPTURER
+    meta_folder = join(hass.config.config_dir, "traces", "meta")
+    META_CAPTURER = PacketCapturer(meta_folder)
+    META_CAPTURER.add_callback(on_network_meta_capture)
     # Setup profiling
     add_profile_callbacks()
     load_profiles(join(hass.config.config_dir, STORAGE_NAME))
@@ -191,6 +196,10 @@ def on_network_capture(packet_list):
     for packet in packet_list:
         handle_packet(packet)
     _LOGGER.info("Done processing packets")
+
+
+def on_network_meta_capture(packet_list):
+    _LOGGER.info("Got %i meta packets", len(packet_list))
 
 
 def get_gateways():

@@ -200,6 +200,7 @@ def on_network_capture(packet_list):
 
 def on_network_meta_capture(packet_list):
     _LOGGER.info("Got %i meta packets", len(packet_list))
+    from scapy.all import Dot11Elt, RadioTap
     for p in packet_list:
         if not p.haslayer(Dot11Elt):
             _LOGGER.info("No Dot11Elt packet!")

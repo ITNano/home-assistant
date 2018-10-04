@@ -694,12 +694,12 @@ class PacketCapturer:
 
     from watchdog.events import FileSystemEventHandler
 
-    def __init__(self, path):
+    def __init__(self, path, recursive=False):
         """Initialize and starts to monitor the given path."""
         self.callbacks = []
         from watchdog.observers import Observer
         self.observer = Observer()
-        self.observer.schedule(self.PacketCaptureHandler(self.on_event), path)
+        self.observer.schedule(self.PacketCaptureHandler(self.on_event), path, recursive=recursive)
         self.observer.start()
 
     def on_event(self, packet_list):

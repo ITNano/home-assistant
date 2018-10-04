@@ -758,5 +758,5 @@ def safe_exc(func, default, *args):
     try:
         return func(*args)
     except Exception:
-        _LOGGER.error("Caught an exception for Threat Detection.", exc_info=1)
+        _LOGGER.exception("Exception in threat detection", exc_info=1)
         return default

@@ -746,7 +746,7 @@ class PacketCapturer:
             _LOGGER.info("Done reading network files")
             # Remove read files so data are only read once
             for file in files:
-                os.remove(join(path, file))
+                safe_exc(os.remove, None, join(path, file))
             # Allow new files to be read
             self.lock.release()
             # Notify the user of the found data

@@ -41,7 +41,7 @@ CONFIG_SCHEMA = vol.Schema({
 }, extra=vol.ALLOW_EXTRA)
 
 CAPTURER = None
-META_CAPTURER = None
+BEACON_CAPTURER = None
 DEVICES = {}
 DETECTION_OBJ = None
 PROFILING_TIME = DEF_PROFILING_TIME
@@ -70,10 +70,10 @@ def async_setup(hass, config=None):
     global CAPTURER
     CAPTURER = PacketCapturer(join(hass.config.config_dir, "traces"))
     CAPTURER.add_callback(on_network_capture)
-    global META_CAPTURER
-    meta_folder = join(hass.config.config_dir, "traces", "meta")
-    META_CAPTURER = PacketCapturer(meta_folder)
-    META_CAPTURER.add_callback(on_network_meta_capture)
+    global BEACON_CAPTURER
+    beacon_folder = join(hass.config.config_dir, "traces", "meta")
+    BEACON_CAPTURER = PacketCapturer(beacon_folder)
+    BEACON_CAPTURER.add_callback(on_network_meta_capture)
     # Setup profiling
     add_profile_callbacks()
     load_profiles(join(hass.config.config_dir, STORAGE_NAME))

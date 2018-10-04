@@ -390,7 +390,7 @@ def get_dns_profiler():
         domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
         return [('dns', dict), (domain, list), '+']
     def value(prof, pkt):
-        return pkt.getlayer(DNSRR).rdata.decode('utf-8')
+        return pkt.getlayer(DNSRR).rdata
     return {'device_selector': selector,
             'condition': condition,
             'mappers': [(prop, value)],

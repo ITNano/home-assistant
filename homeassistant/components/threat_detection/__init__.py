@@ -705,7 +705,7 @@ class PacketCapturer:
     def on_event(self, packet_list):
         """Distribute new packets to registered callbacks."""
         for callback in self.callbacks:
-            callback(packet_list)
+            safe_exc(callback, None, packet_list)
 
     def add_callback(self, callback):
         """Register a callback for data."""
@@ -758,5 +758,5 @@ def safe_exc(func, default, *args):
     try:
         return func(*args)
     except Exception:
-        _LOGGER.warning("Caught an exception for Threat Detection.")
+        _LOGGER.error("Caught an exception for Threat Detection.", exc_info=1)
         return default

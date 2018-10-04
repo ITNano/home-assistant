@@ -71,7 +71,7 @@ def async_setup(hass, config=None):
     CAPTURER = PacketCapturer(join(hass.config.config_dir, "traces"))
     CAPTURER.add_callback(on_network_capture)
     global BEACON_CAPTURER
-    beacon_folder = join(hass.config.config_dir, "traces", "meta")
+    beacon_folder = join(hass.config.config_dir, "traces", "beacon")
     BEACON_CAPTURER = PacketCapturer(beacon_folder)
     BEACON_CAPTURER.add_callback(on_network_meta_capture)
     # Setup profiling

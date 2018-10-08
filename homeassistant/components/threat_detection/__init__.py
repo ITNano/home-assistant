@@ -611,7 +611,7 @@ def get_IDs_from_packet(packet):
     """
     from scapy.all import Ether
     if packet.haslayer(Ether):
-        return packet.src, packet.dst
+        return [packet.src, packet.dst]
 
     return None, None
 

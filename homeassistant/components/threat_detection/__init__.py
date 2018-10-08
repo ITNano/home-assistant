@@ -153,6 +153,11 @@ class ThreatDetection(Entity):
             return self._threats[-1]
 
 
+def report_threats(threats):
+    """Report found threats to user"""
+    DETECTION_OBJ.add_threats(threats)
+
+
 def state_changed_handler(event):
     """Handle what to do in the event of a state change."""
     event_dict = event.as_dict()
@@ -260,15 +265,6 @@ def add_profile_callbacks():
     Profile.add_profiler(tcp_profiler)
     Profile.add_profiler(udp_profiler)
     Profile.add_profiler(dns_profiler)
-    
-    botnet_analyser_ipv4 = {'device_selector': (lambda prof: True),
-                            'condition': botnet_condition(IP),
-                            'analyse_func': check_botnet(IP)}
-    botnet_analyser_ipv6 = {'device_selector': (lambda prof: True),
-                            'condition': botnet_condition(IPv6),
-                            'analyse_func': check_botnet(IPv6)}
-    Profile.add_analyser(botnet_analyser_ipv4)
-    Profile.add_analyser(botnet_analyser_ipv6)
 
 
 def map_packet_prop(layer_func, prop, layer, prop_name):
@@ -408,28 +404,6 @@ def profile_data(profile, path, default=None):
     if res is None:
         return default
     return res
-
-
-def botnet_condition(proto):
-    return lambda prof, pkt: pkt.haslayer(proto) and prof.get_id() == pkt.src
-
-
-def check_botnet(proto):
-    def check(prof, pkt):
-        records = profile_data(prof, ipvx_prop(proto)(prof, pkt, 'count'))
-        if not records:
-            dns_entries = profile_data(prof, ['dns'], {})
-            remote_ip = pkt.getlayer(proto).dst
-            if [ip for entry in dns_entries.values() for ip in entry if ip == remote_ip]:
-                # Service has changed IP. Update profile.
-                profile_packet(prof, pkt)
-            else:
-                # Botnet device detected
-                ip = pkt.getlayer(proto)
-                return ("Potential botnet activity detected. Device %s sent"
-                        " data to %s at %s"
-                       ) % (ip.src, ip.dst, datetime.now().strftime('%H:%M'))
-    return check
 
 # --------------------------------- PROFILING ------------------------------ #
 PROFILES = {}

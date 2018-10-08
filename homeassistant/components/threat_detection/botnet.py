@@ -15,6 +15,7 @@ from homeassistant.components.threat_detection import (Profile,
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the platform."""
+    from scapy.all import IP, IPv6
     botnet_analyser_ipv4 = {'device_selector': (lambda prof: True),
                             'condition': botnet_condition(IP),
                             'analyse_func': check_botnet(IP)}

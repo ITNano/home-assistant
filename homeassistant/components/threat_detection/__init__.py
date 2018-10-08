@@ -53,7 +53,7 @@ KNOWN_DEVICES = 'known_devices.yaml'
 def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     component = EntityComponent(_LOGGER, DOMAIN, hass)
-    # yield from component.async_setup(config)
+    yield from component.async_setup(config)
 
     global PROFILING_TIME
     # FIXME: Temporary solution.

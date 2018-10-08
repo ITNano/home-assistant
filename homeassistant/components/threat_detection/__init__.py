@@ -545,8 +545,8 @@ class Profile:
 def handle_packet(packet):
     """Handle incoming packets and route them to their destination."""
     # Find/create matching profiles
-    sender, receiver = get_communicators(packet)
-    profiles = find_profiles(sender, receiver)
+    profile_ids = get_IDs_from_packet(packet)
+    profiles = find_profiles(profile_ids)
 
     profiling = len([p for p in profiles if p.is_profiling()]) > 0
     res = []
@@ -581,9 +581,9 @@ def analyse_packet(profile, packet):
     return res
 
 
-def find_profiles(sender, receiver):
+def find_profiles(profile_ids):
     """Find or create the profiles for the communicating parties."""
-    res = [get_profile(sender), get_profile(receiver)]
+    res = [get_profile(id) for id in profile_ids]
     return [r for r in res if r is not None]
 
 
@@ -600,7 +600,11 @@ def get_profile(identifier):
         return PROFILES.get(identifier)
 
 
-def get_communicators(packet):
+def get_profiles(filter_func):
+    return [p for p in PROFILES if filter_func(p)]
+
+
+def get_IDs_from_packet(packet):
     """Retrieve the IDs of communicating parts from a packet.
 
     NOTE: This is not modular atm.

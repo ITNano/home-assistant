@@ -11,7 +11,7 @@ from homeassistant.components.threat_detection import (Profile,
                                                        profile_data,
                                                        ipvx_prop,
                                                        PLATFORM_SCHEMA,
-                                                       DOMAIN, DEPENDENCIES)
+                                                       DOMAIN)
 
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):

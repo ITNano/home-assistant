@@ -14,7 +14,7 @@ import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.discovery import async_load_platform
 
 from homeassistant.components.threat_detection import (PLATFORM_SCHEMA,
-                                                       DOMAIN, DEPENDENCIES)
+                                                       DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 

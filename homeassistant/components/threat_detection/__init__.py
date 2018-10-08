@@ -56,8 +56,8 @@ def async_setup(hass, config=None):
     # yield from component.async_setup(config)
 
     global PROFILING_TIME
-    _LOGGER.info("Conf: %s", str(config[DOMAIN]))
-    PROFILING_TIME = config[DOMAIN].get(CONF_PROFILING_TIME,
+    # FIXME: Temporary solution.
+    PROFILING_TIME = config[DOMAIN][0].get(CONF_PROFILING_TIME,
                                         DEF_PROFILING_TIME)
 
     yield from async_load_device_data(hass)

@@ -26,7 +26,7 @@ DOMAIN = "threat_detection"
 
 ENTITIY_ID_FORMAT = DOMAIN + ".{}"
 
-DEPENDENCIES = ['scapy==2.4.0', 'watchdog==0.9.0']
+DEPENDENCIES = ['scapy==2.4.0.dev444', 'watchdog==0.9.0']
 
 # Configuration input
 CONF_PROFILING_TIME = 'profiling_time'

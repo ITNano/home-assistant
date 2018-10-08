@@ -517,7 +517,8 @@ class Profile:
             Profile.PROFILERS.append(profiler)
             # Reload profiler list for each client
             for profile in PROFILES.values():
-                profile.reload_profilers()
+                if Profile.selector_matches(profile, profiler):
+                    profile._profilers.append(profiler)
 
     @staticmethod
     def add_analyser(analyser):
@@ -529,12 +530,18 @@ class Profile:
             Profile.ANALYSERS.append(analyser)
             # Reload analyser list for each client
             for profile in PROFILES.values():
-                profile.reload_analysers()
+                if Profile.selector_matches(profile, analyser):
+                    profile._analysers.append(analyser)
 
     @staticmethod
     def get_aop_list(profile, data_list):
         """Return the list with entries matching the selector function."""
-        return [entry for entry in data_list if entry['device_selector'](profile)]
+        return [entry for entry in data_list
+                      if Profile.selector_matches(profile, entry)]
+        
+    @staticmethod
+    def selector_matches(profile, entry):
+        return entry['device_selector'](profile)
 
 
 def handle_packet(packet):

@@ -25,6 +25,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
                             'analyse_func': check_botnet(IPv6)}
     Profile.add_analyser(botnet_analyser_ipv4)
     Profile.add_analyser(botnet_analyser_ipv6)
+    Profile.add_profiler(get_dns_profiler())
 
 
 def botnet_condition(proto):
@@ -47,3 +48,25 @@ def check_botnet(proto):
                         " data to %s at %s"
                        ) % (ip.src, ip.dst, datetime.now().strftime('%H:%M'))
     return check
+
+
+def get_dns_profiler():
+    from scapy.all import DNSRR
+    def selector(prof):
+        return True
+    def condition(prof, pkt):
+        if pkt.haslayer(DNSRR):
+            domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
+            data = profile_data(prof, ['dns', domain])
+            return (prof.get_id() == pkt.dst and
+                    (prof.is_profiling() or data) and
+                    (data is None or pkt.getlayer(DNSRR).rdata not in data))
+    def prop(prof, pkt):
+        domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
+        return [('dns', dict), (domain, list), '+']
+    def value(prof, pkt):
+        return pkt.getlayer(DNSRR).rdata
+    return {'device_selector': selector,
+            'condition': condition,
+            'mappers': [(prop, value)],
+            'run_always': True}

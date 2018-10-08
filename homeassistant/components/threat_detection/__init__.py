@@ -258,14 +258,12 @@ def add_profile_callbacks():
                       transform_prop(udp_prop, 'count', 0, increase),
                       transform_prop(udp_prop, 'minsize', 99999, min_size(UDP)),
                       transform_prop(udp_prop, 'maxsize', 0, max_size(UDP))]}
-    dns_profiler = get_dns_profiler()
 
     Profile.add_profiler(eth_profiler)
     Profile.add_profiler(ip_profiler)
     Profile.add_profiler(ipv6_profiler)
     Profile.add_profiler(tcp_profiler)
     Profile.add_profiler(udp_profiler)
-    Profile.add_profiler(dns_profiler)
 
 
 def map_packet_prop(layer_func, prop, layer, prop_name):
@@ -370,28 +368,6 @@ def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
     return [typechoice(mac, dict, types),
             typechoice(ip_addr, dict, types),
             typechoice(layer_name + str(l4_port), dict, types), name]
-
-
-def get_dns_profiler():
-    from scapy.all import DNSRR
-    def selector(prof):
-        return True
-    def condition(prof, pkt):
-        if pkt.haslayer(DNSRR):
-            domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
-            data = profile_data(prof, ['dns', domain])
-            return (prof.get_id() == pkt.dst and
-                    (prof.is_profiling() or data) and
-                    (data is None or pkt.getlayer(DNSRR).rdata not in data))
-    def prop(prof, pkt):
-        domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
-        return [('dns', dict), (domain, list), '+']
-    def value(prof, pkt):
-        return pkt.getlayer(DNSRR).rdata
-    return {'device_selector': selector,
-            'condition': condition,
-            'mappers': [(prop, value)],
-            'run_always': True}
 
 
 def typechoice(value, cls, use_type):

@@ -43,4 +43,4 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 def load_platform(hass, platform, config):
     hass.async_create_task(async_load_platform(
         hass, 'threat_detection', platform, hass_config=config
-    )
+    ))

@@ -12,12 +12,12 @@ from homeassistant.const import CONF_EXCLUDE, CONF_INCLUDE
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.discovery import async_load_platform
 
-from homeassistant.components.threat_detection import (CONFIG_SCHEMA,
+from homeassistant.components.threat_detection import (PLATFORM_SCHEMA,
                                                        DOMAIN, DEPENDENCIES)
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORM_SCHEMA = CONFIG_SCHEMA.extend({
+PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_EXCLUDE): vol.All(cv.ensure_list, [cv.string]),
     vol.Optional(CONF_INCLUDE) : vol.All(cv.ensure_list, [cv.string]),
 })

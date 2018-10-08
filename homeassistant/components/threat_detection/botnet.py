@@ -9,7 +9,7 @@ from homeassistant.components.threat_detection import (Profile,
                                                        report_threats,
                                                        profile_data,
                                                        ipvx_prop,
-                                                       CONFIG_SCHEMA,
+                                                       PLATFORM_SCHEMA,
                                                        DOMAIN, DEPENDENCIES)
 
 

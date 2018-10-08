@@ -33,7 +33,7 @@ CONF_PROFILING_TIME = 'profiling_time'
 DEF_PROFILING_TIME = 86400
 # Here we need to add everything that is required from the conf-file if we
 # need some input from the user.
-CONFIG_SCHEMA = vol.Schema({
+PLATFORM_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Optional(CONF_PROFILING_TIME,
                      default=DEF_PROFILING_TIME): cv.positive_int,

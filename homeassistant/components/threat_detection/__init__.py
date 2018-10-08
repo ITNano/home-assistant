@@ -91,8 +91,6 @@ def async_setup(hass, config=None):
     # Might require await call.
     yield from component.async_add_entities([DETECTION_OBJ])
 
-    _LOGGER.info("The threat_detection component is set up!")
-
     def state_changed_listener(event):
         """Listen to and handle state changes in the state machine."""
         hass.async_add_job(state_changed_handler, event)
@@ -198,16 +196,16 @@ def get_device_information(device_id):
 
 def on_network_capture(packet_list):
     """Called when a network packet list has been captured."""
-    _LOGGER.info(packet_list)
+    _LOGGER.debug(packet_list)
     for packet in packet_list:
         handle_packet(packet)
-    _LOGGER.info("Done processing packets")
+    _LOGGER.debug("Done processing packets")
 
 
 def on_network_meta_capture(packet_list):
-    _LOGGER.info("Got %i meta packets", len(packet_list))
+    _LOGGER.debug("Got %i meta packets", len(packet_list))
     from scapy.all import Dot11Elt, RadioTap
-    _LOGGER.info([(p.getlayer(Dot11Elt).info.decode('utf-8'), p.getlayer(RadioTap).dBm_AntSignal) for p in packet_list])
+    _LOGGER.debug([(p.getlayer(Dot11Elt).info.decode('utf-8'), p.getlayer(RadioTap).dBm_AntSignal) for p in packet_list])
 
 
 def get_gateways():
@@ -699,9 +697,9 @@ class PacketCapturer:
                          and getsize(join(path, f)) > 0)]
             files = list(filter(lambda f: f.endswith('.pcap'), all_files))
             # Parse data from pcap format
-            _LOGGER.info("Reading network files")
+            _LOGGER.debug("Reading network files")
             data = [safe_exc(rdpcap, [], join(path, file)) for file in files]
-            _LOGGER.info("Done reading network files")
+            _LOGGER.debug("Done reading network files")
             # Remove read files so data are only read once
             for file in files:
                 safe_exc(os.remove, None, join(path, file))

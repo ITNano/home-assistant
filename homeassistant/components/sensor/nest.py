@@ -17,9 +17,13 @@ SENSOR_TYPES = ['humidity', 'operation_mode', 'hvac_state']
 
 TEMP_SENSOR_TYPES = ['temperature', 'target']
 
-PROTECT_SENSOR_TYPES = ['co_status', 'smoke_status', 'battery_health']
+PROTECT_SENSOR_TYPES = ['co_status',
+                        'smoke_status',
+                        'battery_health',
+                        # color_status: "gray", "green", "yellow", "red"
+                        'color_status']
 
-STRUCTURE_SENSOR_TYPES = ['eta']
+STRUCTURE_SENSOR_TYPES = ['eta', 'security_state']
 
 _VALID_SENSOR_TYPES = SENSOR_TYPES + TEMP_SENSOR_TYPES + PROTECT_SENSOR_TYPES \
                       + STRUCTURE_SENSOR_TYPES
@@ -115,7 +119,8 @@ class NestBasicSensor(NestSensorDevice):
         if self.variable in VARIABLE_NAME_MAPPING:
             self._state = getattr(self.device,
                                   VARIABLE_NAME_MAPPING[self.variable])
-        elif self.variable in PROTECT_SENSOR_TYPES:
+        elif self.variable in PROTECT_SENSOR_TYPES \
+                and self.variable != 'color_status':
             # keep backward compatibility
             self._state = getattr(self.device, self.variable).capitalize()
         else:

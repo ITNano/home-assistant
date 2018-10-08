@@ -97,7 +97,7 @@ omit =
     homeassistant/components/*/envisalink.py
 
     homeassistant/components/fritzbox.py
-    homeassistant/components/*/fritzbox.py
+    homeassistant/components/switch/fritzbox.py
 
     homeassistant/components/eufy.py
     homeassistant/components/*/eufy.py
@@ -200,6 +200,9 @@ omit =
 
     homeassistant/components/netatmo.py
     homeassistant/components/*/netatmo.py
+
+    homeassistant/components/netgear_lte.py
+    homeassistant/components/*/netgear_lte.py
 
     homeassistant/components/octoprint.py
     homeassistant/components/*/octoprint.py
@@ -311,6 +314,9 @@ omit =
     homeassistant/components/wink/*
     homeassistant/components/*/wink.py
 
+    homeassistant/components/wirelesstag.py
+    homeassistant/components/*/wirelesstag.py
+
     homeassistant/components/xiaomi_aqara.py
     homeassistant/components/*/xiaomi_aqara.py
 
@@ -348,6 +354,7 @@ omit =
     homeassistant/components/binary_sensor/ping.py
     homeassistant/components/binary_sensor/rest.py
     homeassistant/components/binary_sensor/tapsaff.py
+    homeassistant/components/binary_sensor/uptimerobot.py
     homeassistant/components/browser.py
     homeassistant/components/calendar/caldav.py
     homeassistant/components/calendar/todoist.py
@@ -397,6 +404,7 @@ omit =
     homeassistant/components/device_tracker/bt_home_hub_5.py
     homeassistant/components/device_tracker/cisco_ios.py
     homeassistant/components/device_tracker/ddwrt.py
+    homeassistant/components/device_tracker/freebox.py
     homeassistant/components/device_tracker/fritz.py
     homeassistant/components/device_tracker/google_maps.py
     homeassistant/components/device_tracker/gpslogger.py
@@ -462,6 +470,7 @@ omit =
     homeassistant/components/light/yeelightsunflower.py
     homeassistant/components/light/zengge.py
     homeassistant/components/lirc.py
+    homeassistant/components/lock/kiwi.py
     homeassistant/components/lock/lockitron.py
     homeassistant/components/lock/nello.py
     homeassistant/components/lock/nuki.py
@@ -481,10 +490,12 @@ omit =
     homeassistant/components/media_player/directv.py
     homeassistant/components/media_player/dunehd.py
     homeassistant/components/media_player/emby.py
+    homeassistant/components/media_player/epson.py
     homeassistant/components/media_player/firetv.py
     homeassistant/components/media_player/frontier_silicon.py
     homeassistant/components/media_player/gpmdp.py
     homeassistant/components/media_player/gstreamer.py
+    homeassistant/components/media_player/horizon.py
     homeassistant/components/media_player/itunes.py
     homeassistant/components/media_player/kodi.py
     homeassistant/components/media_player/lg_netcast.py
@@ -748,6 +759,7 @@ omit =
     homeassistant/components/tts/picotts.py
     homeassistant/components/vacuum/mqtt.py
     homeassistant/components/vacuum/roomba.py
+    homeassistant/components/watson_iot.py
     homeassistant/components/weather/bom.py
     homeassistant/components/weather/buienradar.py
     homeassistant/components/weather/darksky.py

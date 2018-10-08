@@ -6,6 +6,7 @@ https://home-assistant.io/components/threat_detection/
 """
 
 import logging
+import asyncio
 
 import voluptuous as vol
 from homeassistant.const import CONF_EXCLUDE, CONF_INCLUDE

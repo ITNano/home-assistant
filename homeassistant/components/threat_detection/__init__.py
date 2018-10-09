@@ -627,7 +627,6 @@ def get_IDs_from_packet(packet):
     if packet.haslayer(Ether):
         return [packet.src, packet.dst]
     elif packet.haslayer(Dot11Elt):
-        ssid = ""
         while packet.haslayer(Dot11Elt):
             if packet.getlayer(Dot11Elt).ID == 0:
                 ssid = packet.getlayer(Dot11Elt).info.decode('utf-8')

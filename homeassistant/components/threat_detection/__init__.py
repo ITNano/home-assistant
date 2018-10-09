@@ -205,6 +205,9 @@ def on_network_capture(packet_list):
 def on_network_beacon_capture(packet_list):
     _LOGGER.info("Got %i beacon packets", len(packet_list))
     from scapy.all import Dot11Elt, RadioTap
+
+    on_network_capture(packet_list)
+
     try:
         _LOGGER.info([(p.getlayer(Dot11Elt).info.decode('utf-8'),
                    p.getlayer(RadioTap).dBm_AntSignal) for p in packet_list])

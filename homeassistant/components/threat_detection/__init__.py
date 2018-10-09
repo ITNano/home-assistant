@@ -415,6 +415,7 @@ class Profile:
         self._id, self.data, profiling_left = state
         self.reload_profilers()
         self.reload_analysers()
+        _LOGGER.info("Loaded profile %s. Profiling time left: %s", self._id, str(profiling_left))
         self._profiling_end = (datetime.now() +
                                timedelta(seconds=profiling_left))
         if profiling_left >= 0:

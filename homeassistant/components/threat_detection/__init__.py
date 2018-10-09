@@ -205,7 +205,14 @@ def on_network_capture(packet_list):
 def on_network_meta_capture(packet_list):
     _LOGGER.debug("Got %i meta packets", len(packet_list))
     from scapy.all import Dot11Elt, RadioTap
-    _LOGGER.debug([(p.getlayer(Dot11Elt).info.decode('utf-8'), p.getlayer(RadioTap).dBm_AntSignal) for p in packet_list])
+    try:
+        _LOGGER.debug([(p.getlayer(Dot11Elt).info.decode('utf-8'), p.getlayer(RadioTap).dBm_AntSignal) for p in packet_list])
+    except Exception as e:
+        strange_packets = [p.show(dump=True) for p in packet_list if not p.haslayer(Dot11Elt)]
+        for packet in strange_packets:
+            _LOGGER.info("Got strange beacon packet: %s", packet)
+        if not strange_packets:
+            _LOGGER.info("Got strange beacon packet behaviour but no bad guy")
 
 
 def get_gateways():

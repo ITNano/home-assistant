@@ -186,7 +186,7 @@ def async_load_device_data(hass):
         # Backwards compat (add devices already existing)
         if PROFILES.get(device_id):
             for prop in DEVICES[device_id]:
-                PROFILES.set_data([prop], DEVICES[device_id][prop])
+                PROFILES[device_id].set_data([prop], DEVICES[device_id][prop])
 
 
 def get_device_information(device_id):
@@ -387,6 +387,7 @@ def profile_data(profile, path, default=None):
     if res is None:
         return default
     return res
+
 
 # --------------------------------- PROFILING ------------------------------ #
 PROFILES = {}

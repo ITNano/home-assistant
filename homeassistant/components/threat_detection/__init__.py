@@ -407,8 +407,8 @@ class Profile:
         profiling_left = -1
         _LOGGER.info("Exporting profile %s. End date: %s. Profiling? %s", self._id, str(self._profiling_end), str(self.is_profiling()))
         if self.is_profiling():
-            profiling_left = int((self._profiling_end.timestamp() -
-                                  datetime.now().timestamp()) / 1000)
+            profiling_left = (self._profiling_end.timestamp() -
+                                  datetime.now().timestamp())
             _LOGGER.info("In if block. Profiling left: %s", str(profiling_left))
         return (self._id, self.data, profiling_left)
 

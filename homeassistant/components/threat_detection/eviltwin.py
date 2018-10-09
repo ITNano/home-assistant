@@ -68,7 +68,7 @@ def on_profiling_end(profile):
 
     total = 0
     for index, value in enumerate(rssi):
-        total += math.sqrt(index-mean)*value
+        total += math.sqrt(abs(index-mean))*value
 
     variance = total/(n-1)
 

@@ -631,9 +631,8 @@ def get_IDs_from_packet(packet):
         while packet.haslayer(Dot11Elt):
             if packet.getlayer(Dot11Elt).ID == 0:
                 ssid = packet.getlayer(Dot11Elt).info.decode('utf-8')
-                break
+                return ["AP_" + ssid]
             packet = packet.getlayer(Dot11Elt)
-        return ["AP_" + ssid]
     return []
 
 

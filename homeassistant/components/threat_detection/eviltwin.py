@@ -35,7 +35,7 @@ def device_selector(profile):
     return profile.get_id().startswith("AP_")
 
 def analyse(profile, packet):
-    from scapy.all import Dot11Elt
+    from scapy.all import RadioTap
 
     current_rssi = abs(packet.getlayer(RadioTap.dBm_AntSignal))
     mean = profile.data.get("mean")

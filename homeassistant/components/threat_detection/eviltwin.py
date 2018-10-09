@@ -21,7 +21,8 @@ async def async_setup_platform(hass, config, async_add_entities,
                          'analyse_func': analyse}
     eviltwin_profiler = {'device_selector': device_selector,
                          'condition': condition,
-                         'profiler_func': profiler}
+                         'profiler_func': profiler,
+                         'on_profiling_end': on_profiling_end}
 
     Profile.add_analyser(eviltwin_analyser)
     Profile.add_profiler(eviltwin_profiler)

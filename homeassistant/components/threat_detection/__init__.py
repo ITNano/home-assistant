@@ -262,7 +262,7 @@ def get_ip_profiler():
         if not profile.data[eth_addr].get(ip_addr):
             profile.data[eth_addr][ip_addr] = {}
         container = profile.data[eth_addr][ip_addr]
-        layer = pkt.getlayer(IP) if haslayer(IP) else pkt.getlayer(IPv6)
+        layer = pkt.getlayer(IP) if pkt.haslayer(IP) else pkt.getlayer(IPv6)
         container['src'] = layer.src
         container['dst'] = layer.dst
         container['count'] = container.get('count', 0) + 1

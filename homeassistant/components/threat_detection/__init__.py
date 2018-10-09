@@ -9,7 +9,7 @@ import subprocess
 import os
 import json
 from os.path import dirname, basename, isfile, join, getsize
-from threading import Lock
+from threading import Lock, Timer
 from datetime import datetime, timedelta
 import asyncio
 import pickle
@@ -365,6 +365,18 @@ class Profile:
                                timedelta(seconds=profiling_length))
         self.reload_profilers()
         self.reload_analysers()
+        self.start_profile_end_countdown(profiling_length)
+
+    def start_profile_end_countdown(self, time_left):
+        """Starts a timer which calls on_profiling_end when profiling ends."""
+        self._timer = Timer(time_left, self.on_profiling_end)
+        self._timer.start()
+
+    def on_profiling_end(self):
+        """Runs the on_profiling_end function of all assigned profilers."""
+        for profiler in self._profilers:
+            if profiler.get('on_profiling_end'):
+                profiler['on_profiling_end'](self)
 
     def get_profilers(self):
         """Retrieve the profilers of the profile"""
@@ -391,12 +403,22 @@ class Profile:
         return self._id
 
     def __getstate__(self):
-        return (self._id, self.data, self._profiling_end)
+        """Returns an representation of this object for the pickle module."""
+        profiling_left = -1
+        if self.is_profiling():
+            profiling_left = int((self._profiling_end.timestamp() -
+                                  datetime.now().timestamp()) / 1000)
+        return (self._id, self.data, profiling_left)
 
     def __setstate__(self, state):
-        self._id, self.data, self._profiling_end = state
+        """Loads the object from a pickle object (from file)."""
+        self._id, self.data, profiling_left = state
         self.reload_profilers()
         self.reload_analysers()
+        if profiling_left >= 0:
+            self._profiling_end = (datetime.now() +
+                                   timedelta(seconds=profiling_left))
+            self.start_profile_end_countdown(profiling_left)
 
     def __str__(self):
         """Retrieve a string representation of this object."""

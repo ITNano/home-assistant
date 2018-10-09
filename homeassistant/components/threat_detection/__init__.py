@@ -73,7 +73,7 @@ def async_setup(hass, config=None):
     global BEACON_CAPTURER
     beacon_folder = join(hass.config.config_dir, "traces", "beacon")
     BEACON_CAPTURER = PacketCapturer(beacon_folder)
-    BEACON_CAPTURER.add_callback(on_network_meta_capture)
+    BEACON_CAPTURER.add_callback(on_network_beacon_capture)
     # Setup profiling
     add_profile_callbacks()
     load_profiles(join(hass.config.config_dir, STORAGE_NAME))
@@ -198,10 +198,11 @@ def on_network_capture(packet_list):
     _LOGGER.info("Done processing packets")
 
 
-def on_network_meta_capture(packet_list):
-    _LOGGER.info("Got %i meta packets", len(packet_list))
+def on_network_beacon_capture(packet_list):
+    _LOGGER.info("Got %i beacon packets", len(packet_list))
     from scapy.all import Dot11Elt, RadioTap
-    _LOGGER.info([(p.getlayer(Dot11Elt).info.decode('utf-8'), p.getlayer(RadioTap).dBm_AntSignal) for p in packet_list])
+    _LOGGER.info([(p.getlayer(Dot11Elt).info.decode('utf-8'),
+                   p.getlayer(RadioTap).dBm_AntSignal) for p in packet_list])
 
 
 def get_gateways():
@@ -592,6 +593,8 @@ def handle_packet(packet):
     sender, receiver = get_communicators(packet)
     profiles = find_profiles(sender, receiver)
 
+    # If a new device is added, we must allow for old devices to include the
+    # new device in their profiles.
     profiling = len([p for p in profiles if p.is_profiling()]) > 0
     res = []
     for profile in profiles:

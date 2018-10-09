@@ -5,13 +5,8 @@ For more details about this platform, please refer to the documentation
 https://home-assistant.io/components/threat_detection/eviltwin/
 """
 
-import sys
 import math
-from datetime import datetime
 from homeassistant.components.threat_detection import (Profile,
-                                                       report_threats,
-                                                       profile_data,
-                                                       ipvx_prop,
                                                        PLATFORM_SCHEMA,
                                                        DOMAIN
                                                        )
@@ -27,6 +22,9 @@ async def async_setup_platform(hass, config, async_add_entities,
     eviltwin_profiler = {'device_selector': device_selector,
                          'condition': condition,
                          'profiler_func': profiler}
+
+    Profile.add_analyser(eviltwin_analyser)
+    Profile.add_profiler(eviltwin_profiler)
 
 
 def condition(profile, packet):

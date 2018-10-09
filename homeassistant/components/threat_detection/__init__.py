@@ -405,9 +405,11 @@ class Profile:
     def __getstate__(self):
         """Returns an representation of this object for the pickle module."""
         profiling_left = -1
+        _LOGGER.info("Exporting profile %s. End date: %s. Profiling? %s", self._id, str(self._profiling_end), str(self._is_profiling()))
         if self.is_profiling():
             profiling_left = int((self._profiling_end.timestamp() -
                                   datetime.now().timestamp()) / 1000)
+            _LOGGER.info("In if block. Profiling left: %s", str(profiling_left))
         return (self._id, self.data, profiling_left)
 
     def __setstate__(self, state):

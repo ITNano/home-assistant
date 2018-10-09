@@ -37,7 +37,7 @@ def device_selector(profile):
 def analyse(profile, packet):
     from scapy.all import RadioTap
 
-    current_rssi = abs(packet.getlayer(RadioTap.dBm_AntSignal))
+    current_rssi = abs(packet.getlayer(RadioTap).dBm_AntSignal)
     mean = profile.data.get("mean")
     sigma = profile.data.get("standard_deviation")
     if abs((current_rssi - mean) / sigma) > 3:

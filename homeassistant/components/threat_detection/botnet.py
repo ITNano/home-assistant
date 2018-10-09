@@ -7,7 +7,6 @@ https://home-assistant.io/components/threat_detection/botnet/
 
 from datetime import datetime
 from homeassistant.components.threat_detection import (Profile,
-                                                       ipvx_prop,
                                                        PLATFORM_SCHEMA,
                                                        DOMAIN)
 

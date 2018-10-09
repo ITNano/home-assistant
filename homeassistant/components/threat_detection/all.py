@@ -23,7 +23,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_INCLUDE) : vol.All(cv.ensure_list, [cv.string]),
 })
 
-DEFAULT_PLATFORMS = ['botnet']
+DEFAULT_PLATFORMS = ['botnet', 'eviltwin']
 
 
 @asyncio.coroutine

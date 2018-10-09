@@ -186,7 +186,7 @@ def async_load_device_data(hass):
         # Backwards compat (add devices already existing)
         if PROFILES.get(device_id):
             for prop in DEVICES[device_id]:
-                PROFILES[device_id].set_data([prop], DEVICES[device_id][prop])
+                PROFILES[device_id].data[prop] = DEVICES[device_id][prop]
 
 
 def get_device_information(device_id):
@@ -232,164 +232,118 @@ def get_gateways():
 # ------------------------ PROFILERS and ANALYSERS ------------------------- #
 def add_profile_callbacks():
     """Create default profilers and analysers and activates them."""
-    from scapy.all import Ether, IP, IPv6, TCP, UDP
-    eth_profiler = {'device_selector': lambda prof: True,
-                    'condition': lambda prof, pkt: pkt.haslayer(Ether),
-                    'mappers':
-                     [map_packet_prop(eth_prop, 'src', Ether, 'src'),
-                      map_packet_prop(eth_prop, 'dst', Ether, 'dst'),
-                      transform_prop(eth_prop, 'count', 0, increase)]}
-    ip_profiler = {'device_selector': lambda prof: True,
-                   'condition': lambda prof, pkt: pkt.haslayer(IP),
-                   'mappers':
-                    [map_packet_prop(ipvx_prop(IP), 'src', IP, 'src'),
-                     map_packet_prop(ipvx_prop(IP), 'dst', IP, 'dst'),
-                     transform_prop(ipvx_prop(IP), 'count', 0, increase)]}
-    ipv6_profiler = {'device_selector': lambda prof: True,
-                     'condition': lambda prof, pkt: pkt.haslayer(IPv6),
-                     'mappers':
-                      [map_packet_prop(ipvx_prop(IPv6), 'src', IPv6, 'src'),
-                       map_packet_prop(ipvx_prop(IPv6), 'dst', IPv6, 'dst'),
-                       transform_prop(ipvx_prop(IPv6), 'count', 0, increase)]}
-    tcp_profiler = {'device_selector': lambda prof: True,
-                    'condition': lambda prof, pkt: pkt.haslayer(TCP),
-                    'mappers':
-                     [map_packet_prop(tcp_prop, 'src', IP, 'sport'),
-                      map_packet_prop(tcp_prop, 'dst', IP, 'dport'),
-                      transform_prop(tcp_prop, 'count', 0, increase),
-                      transform_prop(tcp_prop, 'minsize', 99999, min_size(TCP)),
-                      transform_prop(tcp_prop, 'maxsize', 0, max_size(TCP))]}
-    udp_profiler = {'device_selector': lambda prof: True,
-                    'condition': lambda prof, pkt: pkt.haslayer(UDP),
-                    'mappers':
-                     [map_packet_prop(udp_prop, 'src', IP, 'sport'),
-                      map_packet_prop(udp_prop, 'dst', IP, 'dport'),
-                      transform_prop(udp_prop, 'count', 0, increase),
-                      transform_prop(udp_prop, 'minsize', 99999, min_size(UDP)),
-                      transform_prop(udp_prop, 'maxsize', 0, max_size(UDP))]}
-
-    Profile.add_profiler(eth_profiler)
-    Profile.add_profiler(ip_profiler)
-    Profile.add_profiler(ipv6_profiler)
-    Profile.add_profiler(tcp_profiler)
-    Profile.add_profiler(udp_profiler)
+    Profile.add_profiler(get_eth_profiler())
+    Profile.add_profiler(get_ip_profiler())
+    Profile.add_profiler(get_tcp_profiler())
+    Profile.add_profiler(get_udp_profiler())
 
 
-def map_packet_prop(layer_func, prop, layer, prop_name):
-    """Profiler help function to map a packet property into a profile."""
-    return (lambda prof, pkt: layer_func(prof, pkt, prop, True),
-            lambda prof, pkt: pkt.getlayer(layer).getfieldval(prop_name))
+def get_eth_profiler():
+    from scapy.all import Ether
+    def profile_eth(profile, pkt):
+        addr = get_eth_address(profile, pkt)
+        if not profile.data.get(addr):
+            profile.data[addr] = {}
+        container = profile.data[addr]
+        container['src'] = pkt.src
+        container['dst'] = pkt.dst
+        container['count'] = container.get('count', 0) + 1
+
+    return {'device_selector': lambda prof: True,
+            'condition': lambda prof, pkt: pkt.haslayer(Ether),
+            'profiler_func': profile_eth}
 
 
-def transform_prop(layer_func, prop, defval, func):
-    """Profiler help function to update a property.
+def get_ip_profiler():
+    from scapy.all import IP, IPv6
+    def profile_ip(profile, pkt):
+        eth_addr = get_eth_address(profile, pkt)
+        ip_addr = get_ip_address(profile, pkt)
+        if not profile.data[eth_addr].get(ip_addr):
+            profile.data[eth_addr][ip_addr] = {}
+        container = profile.data[eth_addr][ip_addr]
+        layer = pkt.getlayer(IP) if pkt.haslayer(IP) else pkt.getlayer(IPv6)
+        container['src'] = layer.src
+        container['dst'] = layer.dst
+        container['count'] = container.get('count', 0) + 1
 
-    Performs some sort of transformation of a property within a profile
-    (e.g. count appearances, max/min values, ...)
-    """
-    def val_func(prof, pkt):
-        """Apply prop from profile to the given function func(pkt, x)."""
-        return func(pkt, profile_data(prof, layer_func(prof, pkt, prop), defval))
-    return (lambda prof, pkt: layer_func(prof, pkt, prop, True)), val_func
+    def condition(profile, pkt):
+        return pkt.haslayer(IP) or pkt.haslayer(IPv6)
 
-
-def increase(_, val):
-    """Increase the received value by 1."""
-    return val+1
-
-
-def max_size(layer):
-    """Retrieve a function which retrieves the maximum packet length."""
-    def func(pkt, val):
-        """Retrieve the maximum packet length."""
-        return max(val, len(pkt.getlayer(layer)))
-    return func
+    return {'device_selector': lambda prof: True,
+            'condition': condition,
+            'profiler_func': profile_ip}
 
 
-def min_size(layer):
-    """Retrieve a function which retrieves the minimum packet length."""
-    def func(pkt, val):
-        """Retrieve the minimum packet length."""
-        return min(val, len(pkt.getlayer(layer)))
-    return func
-
-
-def eth_prop(prof, pkt, name, types=False):
-    """Return the path of an Ethernet packet.
-
-    types denotes whether this path should include the type of each path
-    element, i.e. if it is supposed to be used with profile.set_data.
-    """
-    mac = pkt.dst if pkt.src == prof.get_id() else pkt.src
-    return [typechoice(mac, dict, types), name]
-
-
-def ipvx_prop(proto):
-    """Return a function to retrieve the path of an IPv4/IPv6 packet."""
-    def ip_prop(prof, pkt, name, types=False):
-        """Return the path of an IP packet.
-
-        types denotes whether this path should include the type of each path
-        element, i.e. if it is supposed to be used with profile.set_data.
-        """
-        ip_layer = pkt.getlayer(proto)
-        mac = pkt.dst if pkt.src == prof.get_id() else pkt.src
-        ip_addr = ip_layer.dst if pkt.src == prof.get_id() else ip_layer.src
-        return [typechoice(mac, dict, types),
-                typechoice(ip_addr, dict, types), name]
-    return ip_prop
-
-
-def tcp_prop(prof, pkt, name, types=False):
-    """Return the path of a TCP packet.
-
-    types denotes whether this path should include the type of each path
-    element, i.e. if it is supposed to be used with profile.set_data.
-    """
+def get_tcp_profiler():
     from scapy.all import TCP
-    return ip_layer4_prop(prof, pkt, TCP, 'TCP', name, types)
+    def profile_tcp(profile, pkt):
+        eth_addr = get_eth_address(profile, pkt)
+        ip_addr = get_ip_address(profile, pkt)
+        tcp_addr = get_tcp_address(profile, pkt)
+        if not profile.data[eth_addr][ip_addr].get(tcp_addr):
+            profile.data[eth_addr][ip_addr][tcp_addr] = {}
+        container = profile.data[eth_addr][ip_addr][tcp_addr]
+        layer = pkt.getlayer(TCP)
+        container['src'] = layer.sport
+        container['dst'] = layer.dport
+        container['count'] = container.get('count', 0) + 1
+        container['minsize'] = min(container.get('minsize', 99999), len(layer))
+        container['maxsize'] = max(container.get('maxsize', 0), len(layer))
+
+    return {'device_selector': lambda prof: True,
+            'condition': lambda prof, pkt: pkt.haslayer(TCP),
+            'profiler_func': profile_tcp}
 
 
-def udp_prop(prof, pkt, name, types=False):
-    """Return the path of a UDP packet.
-
-    types denotes whether this path should include the type of each path
-    element, i.e. if it is supposed to be used with profile.set_data.
-    """
+def get_udp_profiler():
     from scapy.all import UDP
-    return ip_layer4_prop(prof, pkt, UDP, 'UDP', name, types)
+    def profile_udp(profile, pkt):
+        eth_addr = get_eth_address(profile, pkt)
+        ip_addr = get_ip_address(profile, pkt)
+        udp_addr = get_udp_address(profile, pkt)
+        if not profile.data[eth_addr][ip_addr].get(udp_addr):
+            profile.data[eth_addr][ip_addr][udp_addr] = {}
+        container = profile.data[eth_addr][ip_addr][udp_addr]
+        layer = pkt.getlayer(UDP)
+        container['src'] = layer.sport
+        container['dst'] = layer.dport
+        container['count'] = container.get('count', 0) + 1
+        container['minsize'] = min(container.get('minsize', 99999), len(layer))
+        container['maxsize'] = max(container.get('maxsize', 0), len(layer))
+
+    return {'device_selector': lambda prof: True,
+            'condition': lambda prof, pkt: pkt.haslayer(UDP),
+            'profiler_func': profile_udp}
 
 
-def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
-    """Return the path of a UDP/TCP packet.
-
-    layer denotes the scapy layer object whilst layer_name is the canonical
-    name of the layer. types denotes whether this path should include
-    the type of each path element, i.e. if it is supposed to be used
-    with profile.set_data.
-    """
-    from scapy.all import IP
-    ip_layer = pkt.getlayer(IP)
-    layer4 = pkt.getlayer(layer)
-    mac = pkt.dst if pkt.src == prof.get_id() else pkt.src
-    ip_addr = ip_layer.dst if pkt.src == prof.get_id() else ip_layer.src
-    l4_port = layer4.dport if pkt.src == prof.get_id() else layer4.sport
-    return [typechoice(mac, dict, types),
-            typechoice(ip_addr, dict, types),
-            typechoice(layer_name + str(l4_port), dict, types), name]
+def get_address(is_sender, src, dst):
+    return dst if is_sender else src
 
 
-def typechoice(value, cls, use_type):
-    """Retrieve either the value or a tuple (value, cls)."""
-    return (value, cls) if use_type else value
+def get_eth_address(profile, pkt):
+    return get_address(profile.get_id() == pkt.src, pkt.src, pkt.dst)
 
 
-def profile_data(profile, path, default=None):
-    """Retrieve profile data with a fallback default value."""
-    res = profile.get_data(path)
-    if res is None:
-        return default
-    return res
+def get_ip_address(profile, pkt):
+    from scapy.all import IP, IPv6
+    proto = IP if pkt.haslayer(IP) else IPv6
+    layer = pkt.getlayer(proto)
+    return get_address(profile.get_id() == pkt.src, layer.src, layer.dst)
+
+
+def get_tcp_address(profile, pkt):
+    from scapy.all import TCP
+    layer = pkt.getlayer(TCP)
+    port = get_address(profile.get_id() == pkt.src, layer.sport, layer.dport)
+    return "TCP" + str(port)
+
+
+def get_udp_address(profile, pkt):
+    from scapy.all import UDP
+    layer = pkt.getlayer(UDP)
+    port = get_address(profile.get_id() == pkt.src, layer.sport, layer.dport)
+    return "UDP" + str(port)
 
 
 # --------------------------------- PROFILING ------------------------------ #
@@ -406,7 +360,7 @@ class Profile:
     def __init__(self, identifier, profiling_length=86400):
         """Initiate the profile object."""
         self._id = identifier
-        self._data = {}
+        self.data = {}
         self._profiling_end = (datetime.now() +
                                timedelta(seconds=profiling_length))
         self.reload_profilers()
@@ -436,68 +390,17 @@ class Profile:
         """Retrieve the unique ID of this profile."""
         return self._id
 
-    def get_data(self, path):
-        """Retrieve data from a path (a list of hierarchical names)."""
-        data = self._data
-        for prop in path:
-            data = Profile.get_prop(data, prop, create_if_needed=False)
-        return data
-
-    def set_data(self, path, value):
-        """Set data on an annotated path.
-
-        The path should be a list on the form
-        [(name, type), (name, type), .... , (name, type), name].
-        """
-        data = self._data
-        # Traverse data
-        for prop, cls in path[:-1]:
-            data = Profile.get_prop(data, prop, cls)
-
-        # Fill container with value (special case for list append)
-        if type(data) == list and path[-1] == '+':
-            data.append(value)
-        else:
-            # Create container for data if not existant
-            Profile.get_prop(data, path[-1], type(value))
-            # Fill it
-            data[path[-1]] = value
-
     def __getstate__(self):
-        return (self._id, self._data, self._profiling_end)
+        return (self._id, self.data, self._profiling_end)
 
     def __setstate__(self, state):
-        self._id, self._data, self._profiling_end = state
+        self._id, self.data, self._profiling_end = state
         self.reload_profilers()
         self.reload_analysers()
 
     def __str__(self):
         """Retrieve a string representation of this object."""
-        return str(self._data)
-
-    @staticmethod
-    def get_prop(obj, prop, new_cls=None, create_if_needed=True):
-        """Retrieve a property of an object and might create it if needed.
-
-        The parameter new_cls() is required if create_if_needed is True.
-        """
-        cls = type(obj)
-        if cls == dict:
-            if create_if_needed and obj.get(prop) is None:
-                obj[prop] = new_cls()
-            return obj.get(prop)
-        elif cls == list:
-            if create_if_needed:
-                if prop == '+':
-                    obj.append(new_cls())
-                    return obj[-1]
-                elif prop >= len(obj):
-                    for _ in range(prop-len(obj)):
-                        obj.append(None)
-                    obj.append(new_cls())
-            return obj[prop]
-        else:
-            return None
+        return str(self.data)
 
     @staticmethod
     def tree_to_string(name, data, level=0):
@@ -581,9 +484,7 @@ def profile_packet(profile, packet, only_inf=False):
     for profiler in profile.get_profilers():
         if not only_inf or profiler.get('run_always'):
             if profiler['condition'](profile, packet):
-                for prop_func, value_func in profiler['mappers']:
-                    profile.set_data(prop_func(profile, packet),
-                                     value_func(profile, packet))
+                profiler['profiler_func'](profile, packet)
 
 
 def analyse_packet(profile, packet):
@@ -610,7 +511,7 @@ def get_profile(identifier):
             PROFILES[identifier] = Profile(identifier, PROFILING_TIME)
             device_info = get_device_information(identifier)
             for prop in device_info:
-                PROFILES[identifier].set_data([prop], device_info[prop])
+                PROFILES[identifier].data[prop] = device_info[prop]
         return PROFILES.get(identifier)
 
 
@@ -649,7 +550,7 @@ def save_profiles(filename):
         if id is None:
             id = '__None__'
         with open('/home/scionova/.homeassistant/profile_debug_'+id.replace(':', '.')+'.json', 'w') as jsonout:
-            json.dump(profile._data, jsonout)
+            json.dump(profile.data, jsonout)
 
 
 def load_profiles(filename):

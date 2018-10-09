@@ -7,9 +7,9 @@ https://home-assistant.io/components/threat_detection/botnet/
 
 from datetime import datetime
 from homeassistant.components.threat_detection import (Profile,
-                                                       report_threats,
-                                                       profile_data,
-                                                       ipvx_prop,
+                                                       get_eth_address,
+                                                       get_ip_address,
+                                                       profile_packet,
                                                        PLATFORM_SCHEMA,
                                                        DOMAIN)
 
@@ -34,9 +34,11 @@ def botnet_condition(proto):
 
 def check_botnet(proto):
     def check(prof, pkt):
-        records = profile_data(prof, ipvx_prop(proto)(prof, pkt, 'count'))
+        eth_addr = get_eth_address(prof, pkt)
+        ip_addr = get_ip_address(prof, pkt)
+        records = prof.data.get(eth_addr, {}).get(ip_addr, {}).get('count')
         if not records:
-            dns_entries = profile_data(prof, ['dns'], {})
+            dns_entries = prof.data.get("dns", {})
             remote_ip = pkt.getlayer(proto).dst
             if [ip for entry in dns_entries.values() for ip in entry if ip == remote_ip]:
                 # Service has changed IP. Update profile.
@@ -57,16 +59,20 @@ def get_dns_profiler():
     def condition(prof, pkt):
         if pkt.haslayer(DNSRR):
             domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
-            data = profile_data(prof, ['dns', domain])
+            data = prof.data.get("dns", {}).get(domain, [])
             return (prof.get_id() == pkt.dst and
                     (prof.is_profiling() or data) and
-                    (data is None or pkt.getlayer(DNSRR).rdata not in data))
-    def prop(prof, pkt):
+                    pkt.getlayer(DNSRR).rdata not in data)
+    def profiler(profile, pkt):
         domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
-        return [('dns', dict), (domain, list), '+']
-    def value(prof, pkt):
-        return pkt.getlayer(DNSRR).rdata
+        ip = pkt.getlayer(DNSRR).rdata
+        if not profile.data.get("dns"):
+            profile.data["dns"] = {}
+        if not profile.data["dns"].get(domain):
+            profile.data["dns"][domain] = []
+        if ip not in profile.data["dns"][domain]:
+            profile.data["dns"][domain].append(ip)
     return {'device_selector': selector,
             'condition': condition,
-            'mappers': [(prop, value)],
+            'profiler_func': profiler,
             'run_always': True}

@@ -57,16 +57,20 @@ def get_dns_profiler():
     def condition(prof, pkt):
         if pkt.haslayer(DNSRR):
             domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
-            data = profile_data(prof, ['dns', domain])
+            data = prof.data.get("dns", {}).get(domain, [])
             return (prof.get_id() == pkt.dst and
                     (prof.is_profiling() or data) and
-                    (data is None or pkt.getlayer(DNSRR).rdata not in data))
-    def prop(prof, pkt):
+                    pkt.getlayer(DNSRR).rdata not in data)
+    def profiler(profile, pkt):
         domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
-        return [('dns', dict), (domain, list), '+']
-    def value(prof, pkt):
-        return pkt.getlayer(DNSRR).rdata
+        ip = pkt.getlayer(DNSRR).rdata
+        if not profile.data.get("dns"):
+            profile.data["dns"] = {}
+        if not profile.data["dns"].get(domain):
+            profile.data["dns"][domain] = []
+        if ip not in profile.data["dns"][domain]:
+            profile.data["dns"][domain].append(ip)
     return {'device_selector': selector,
             'condition': condition,
-            'mappers': [(prop, value)],
+            'profiler_func': profiler,
             'run_always': True}

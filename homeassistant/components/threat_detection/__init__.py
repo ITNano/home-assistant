@@ -26,14 +26,14 @@ DOMAIN = "threat_detection"
 
 ENTITIY_ID_FORMAT = DOMAIN + ".{}"
 
-DEPENDENCIES = []
+REQUIREMENTS = ['scapy==2.4.0.dev444', 'watchdog==0.9.0']
 
 # Configuration input
 CONF_PROFILING_TIME = 'profiling_time'
 DEF_PROFILING_TIME = 86400
 # Here we need to add everything that is required from the conf-file if we
 # need some input from the user.
-CONFIG_SCHEMA = vol.Schema({
+PLATFORM_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Optional(CONF_PROFILING_TIME,
                      default=DEF_PROFILING_TIME): cv.positive_int,
@@ -53,10 +53,11 @@ KNOWN_DEVICES = 'known_devices.yaml'
 def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     component = EntityComponent(_LOGGER, DOMAIN, hass)
-    # yield from component.async_setup(config)
+    yield from component.async_setup(config)
 
     global PROFILING_TIME
-    PROFILING_TIME = config[DOMAIN].get(CONF_PROFILING_TIME,
+    # FIXME: Temporary solution.
+    PROFILING_TIME = config[DOMAIN][0].get(CONF_PROFILING_TIME,
                                         DEF_PROFILING_TIME)
 
     yield from async_load_device_data(hass)
@@ -89,8 +90,6 @@ def async_setup(hass, config=None):
         hass, "td_obj", "Threat Detection", "mdi:security-close")
     # Might require await call.
     yield from component.async_add_entities([DETECTION_OBJ])
-
-    _LOGGER.info("The threat_detection component is set up!")
 
     def state_changed_listener(event):
         """Listen to and handle state changes in the state machine."""
@@ -153,6 +152,11 @@ class ThreatDetection(Entity):
             return self._threats[-1]
 
 
+def report_threats(threats):
+    """Report found threats to user"""
+    DETECTION_OBJ.add_threats(threats)
+
+
 def state_changed_handler(event):
     """Handle what to do in the event of a state change."""
     event_dict = event.as_dict()
@@ -192,17 +196,24 @@ def get_device_information(device_id):
 
 def on_network_capture(packet_list):
     """Called when a network packet list has been captured."""
-    _LOGGER.info(packet_list)
+    _LOGGER.debug(packet_list)
     for packet in packet_list:
         handle_packet(packet)
-    _LOGGER.info("Done processing packets")
+    _LOGGER.debug("Done processing packets")
 
 
 def on_network_beacon_capture(packet_list):
     _LOGGER.info("Got %i beacon packets", len(packet_list))
     from scapy.all import Dot11Elt, RadioTap
-    _LOGGER.info([(p.getlayer(Dot11Elt).info.decode('utf-8'),
+    try:
+        _LOGGER.info([(p.getlayer(Dot11Elt).info.decode('utf-8'),
                    p.getlayer(RadioTap).dBm_AntSignal) for p in packet_list])
+    except Exception as e:
+        strange_packets = [p.show(dump=True) for p in packet_list if not p.haslayer(Dot11Elt)]
+        for packet in strange_packets:
+            _LOGGER.info("Got strange beacon packet: %s", packet)
+        if not strange_packets:
+            _LOGGER.info("Got strange beacon packet behaviour but no bad guy")
 
 
 def get_gateways():
@@ -253,23 +264,12 @@ def add_profile_callbacks():
                       transform_prop(udp_prop, 'count', 0, increase),
                       transform_prop(udp_prop, 'minsize', 99999, min_size(UDP)),
                       transform_prop(udp_prop, 'maxsize', 0, max_size(UDP))]}
-    dns_profiler = get_dns_profiler()
 
     Profile.add_profiler(eth_profiler)
     Profile.add_profiler(ip_profiler)
     Profile.add_profiler(ipv6_profiler)
     Profile.add_profiler(tcp_profiler)
     Profile.add_profiler(udp_profiler)
-    Profile.add_profiler(dns_profiler)
-    
-    botnet_analyser_ipv4 = {'device_selector': (lambda prof: True),
-                            'condition': botnet_condition(IP),
-                            'analyse_func': check_botnet(IP)}
-    botnet_analyser_ipv6 = {'device_selector': (lambda prof: True),
-                            'condition': botnet_condition(IPv6),
-                            'analyse_func': check_botnet(IPv6)}
-    Profile.add_analyser(botnet_analyser_ipv4)
-    Profile.add_analyser(botnet_analyser_ipv6)
 
 
 def map_packet_prop(layer_func, prop, layer, prop_name):
@@ -376,28 +376,6 @@ def ip_layer4_prop(prof, pkt, layer, layer_name, name, types=False):
             typechoice(layer_name + str(l4_port), dict, types), name]
 
 
-def get_dns_profiler():
-    from scapy.all import DNSRR
-    def selector(prof):
-        return True
-    def condition(prof, pkt):
-        if pkt.haslayer(DNSRR):
-            domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
-            data = profile_data(prof, ['dns', domain])
-            return (prof.get_id() == pkt.dst and
-                    (prof.is_profiling() or data) and
-                    (data is None or pkt.getlayer(DNSRR).rdata not in data))
-    def prop(prof, pkt):
-        domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
-        return [('dns', dict), (domain, list), '+']
-    def value(prof, pkt):
-        return pkt.getlayer(DNSRR).rdata
-    return {'device_selector': selector,
-            'condition': condition,
-            'mappers': [(prop, value)],
-            'run_always': True}
-
-
 def typechoice(value, cls, use_type):
     """Retrieve either the value or a tuple (value, cls)."""
     return (value, cls) if use_type else value
@@ -409,28 +387,6 @@ def profile_data(profile, path, default=None):
     if res is None:
         return default
     return res
-
-
-def botnet_condition(proto):
-    return lambda prof, pkt: pkt.haslayer(proto) and prof.get_id() == pkt.src
-
-
-def check_botnet(proto):
-    def check(prof, pkt):
-        records = profile_data(prof, ipvx_prop(proto)(prof, pkt, 'count'))
-        if not records:
-            dns_entries = profile_data(prof, ['dns'], {})
-            remote_ip = pkt.getlayer(proto).dst
-            if [ip for entry in dns_entries.values() for ip in entry if ip == remote_ip]:
-                # Service has changed IP. Update profile.
-                profile_packet(prof, pkt)
-            else:
-                # Botnet device detected
-                ip = pkt.getlayer(proto)
-                return ("Potential botnet activity detected. Device %s sent"
-                        " data to %s at %s"
-                       ) % (ip.src, ip.dst, datetime.now().strftime('%H:%M'))
-    return check
 
 # --------------------------------- PROFILING ------------------------------ #
 PROFILES = {}
@@ -567,7 +523,8 @@ class Profile:
             Profile.PROFILERS.append(profiler)
             # Reload profiler list for each client
             for profile in PROFILES.values():
-                profile.reload_profilers()
+                if Profile.selector_matches(profile, profiler):
+                    profile._profilers.append(profiler)
 
     @staticmethod
     def add_analyser(analyser):
@@ -579,19 +536,25 @@ class Profile:
             Profile.ANALYSERS.append(analyser)
             # Reload analyser list for each client
             for profile in PROFILES.values():
-                profile.reload_analysers()
+                if Profile.selector_matches(profile, analyser):
+                    profile._analysers.append(analyser)
 
     @staticmethod
     def get_aop_list(profile, data_list):
         """Return the list with entries matching the selector function."""
-        return [entry for entry in data_list if entry['device_selector'](profile)]
+        return [entry for entry in data_list
+                      if Profile.selector_matches(profile, entry)]
+        
+    @staticmethod
+    def selector_matches(profile, entry):
+        return entry['device_selector'](profile)
 
 
 def handle_packet(packet):
     """Handle incoming packets and route them to their destination."""
     # Find/create matching profiles
-    sender, receiver = get_communicators(packet)
-    profiles = find_profiles(sender, receiver)
+    profile_ids = get_IDs_from_packet(packet)
+    profiles = find_profiles(profile_ids)
 
     # If a new device is added, we must allow for old devices to include the
     # new device in their profiles.
@@ -628,9 +591,9 @@ def analyse_packet(profile, packet):
     return res
 
 
-def find_profiles(sender, receiver):
+def find_profiles(profile_ids):
     """Find or create the profiles for the communicating parties."""
-    res = [get_profile(sender), get_profile(receiver)]
+    res = [get_profile(id) for id in profile_ids]
     return [r for r in res if r is not None]
 
 
@@ -647,16 +610,20 @@ def get_profile(identifier):
         return PROFILES.get(identifier)
 
 
-def get_communicators(packet):
+def get_profiles(filter_func):
+    return [p for p in PROFILES if filter_func(p)]
+
+
+def get_IDs_from_packet(packet):
     """Retrieve the IDs of communicating parts from a packet.
 
     NOTE: This is not modular atm.
     """
     from scapy.all import Ether
     if packet.haslayer(Ether):
-        return packet.src, packet.dst
+        return [packet.src, packet.dst]
 
-    return None, None
+    return []
 
 
 def ignore_device(identifier):
@@ -744,9 +711,9 @@ class PacketCapturer:
                          and getsize(join(path, f)) > 0)]
             files = list(filter(lambda f: f.endswith('.pcap'), all_files))
             # Parse data from pcap format
-            _LOGGER.info("Reading network files")
+            _LOGGER.debug("Reading network files")
             data = [safe_exc(rdpcap, [], join(path, file)) for file in files]
-            _LOGGER.info("Done reading network files")
+            _LOGGER.debug("Done reading network files")
             # Remove read files so data are only read once
             for file in files:
                 safe_exc(os.remove, None, join(path, file))

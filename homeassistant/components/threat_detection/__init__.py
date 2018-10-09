@@ -620,10 +620,17 @@ def get_IDs_from_packet(packet):
 
     NOTE: This is not modular atm.
     """
-    from scapy.all import Ether
+    from scapy.all import Ether, Dot11Elt
     if packet.haslayer(Ether):
         return [packet.src, packet.dst]
-
+    elif packet.haslayer(Dot11Elt):
+        ssid = ""
+        while packet.haslayer(Dot11Elt):
+            if packet.getlayer(Dot11Elt).ID == 0:
+                ssid = packet.getlayer(Dot11Elt).info.decode('utf-8')
+                break
+            packet = packet.getlayer(Dot11Elt)
+        return ["AP_" + ssid]
     return []
 
 

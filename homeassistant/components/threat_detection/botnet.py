@@ -7,6 +7,9 @@ https://home-assistant.io/components/threat_detection/botnet/
 
 from datetime import datetime
 from homeassistant.components.threat_detection import (Profile,
+                                                       get_eth_address,
+                                                       get_ip_address,
+                                                       profile_packet,
                                                        PLATFORM_SCHEMA,
                                                        DOMAIN)
 
@@ -31,9 +34,11 @@ def botnet_condition(proto):
 
 def check_botnet(proto):
     def check(prof, pkt):
-        records = profile_data(prof, ipvx_prop(proto)(prof, pkt, 'count'))
+        eth_addr = get_eth_address(prof, pkt)
+        ip_addr = get_ip_address(prof, pkt)
+        records = prof.data.get(eth_addr, {}).get(ip_addr, {}).get('count')
         if not records:
-            dns_entries = profile_data(prof, ['dns'], {})
+            dns_entries = prof.data.get("dns", {})
             remote_ip = pkt.getlayer(proto).dst
             if [ip for entry in dns_entries.values() for ip in entry if ip == remote_ip]:
                 # Service has changed IP. Update profile.

@@ -415,9 +415,9 @@ class Profile:
         self._id, self.data, profiling_left = state
         self.reload_profilers()
         self.reload_analysers()
+        self._profiling_end = (datetime.now() +
+                               timedelta(seconds=profiling_left))
         if profiling_left >= 0:
-            self._profiling_end = (datetime.now() +
-                                   timedelta(seconds=profiling_left))
             self.start_profile_end_countdown(profiling_left)
 
     def __str__(self):

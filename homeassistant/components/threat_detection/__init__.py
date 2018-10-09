@@ -613,7 +613,7 @@ def get_IDs_from_packet(packet):
     if packet.haslayer(Ether):
         return [packet.src, packet.dst]
 
-    return None, None
+    return []
 
 
 def ignore_device(identifier):

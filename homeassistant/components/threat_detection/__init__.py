@@ -239,6 +239,7 @@ def add_profile_callbacks():
 
 
 def get_eth_profiler():
+    from scapy.all import Ether
     def profile_eth(profile, pkt):
         addr = get_eth_address(profile, pkt)
         if not profile.data.get(addr):
@@ -254,8 +255,8 @@ def get_eth_profiler():
 
 
 def get_ip_profiler():
+    from scapy.all import IP, IPv6
     def profile_ip(profile, pkt):
-        from scapy.all import IP, IPv6
         eth_addr = get_eth_address(profile, pkt)
         ip_addr = get_ip_address(profile, pkt)
         if not profile.data[eth_addr].get(ip_addr):
@@ -275,8 +276,8 @@ def get_ip_profiler():
 
 
 def get_tcp_profiler():
+    from scapy.all import TCP
     def profile_tcp(profile, pkt):
-        from scapy.all import TCP
         eth_addr = get_eth_address(profile, pkt)
         ip_addr = get_ip_address(profile, pkt)
         tcp_addr = get_tcp_address(profile, pkt)
@@ -296,8 +297,8 @@ def get_tcp_profiler():
 
 
 def get_udp_profiler():
+    from scapy.all import UDP
     def profile_udp(profile, pkt):
-        from scapy.all import UDP
         eth_addr = get_eth_address(profile, pkt)
         ip_addr = get_ip_address(profile, pkt)
         udp_addr = get_udp_address(profile, pkt)

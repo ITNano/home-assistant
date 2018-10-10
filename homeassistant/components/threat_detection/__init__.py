@@ -55,6 +55,8 @@ def async_setup(hass, config=None):
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     yield from component.async_setup(config)
 
+    _LOGGER.info("Config: " + str(config))
+    
     global PROFILING_TIME
     # FIXME: Temporary solution.
     PROFILING_TIME = config[DOMAIN][0].get(CONF_PROFILING_TIME,

@@ -54,15 +54,13 @@ def async_setup(hass, config=None):
     """Set up the threat_detection component."""
     component = EntityComponent(_LOGGER, DOMAIN, hass)
     yield from component.async_setup(config)
-
-    _LOGGER.info("Config: " + str(config))
     
     global PROFILING_TIME
     # FIXME: Temporary solution.
     PROFILING_TIME = config[DOMAIN][0].get(CONF_PROFILING_TIME,
                                         DEF_PROFILING_TIME)
 
-    yield from async_load_device_data(hass)
+    yield from async_load_device_data(hass, config)
 
     # Set up network properties
     for device in get_gateways():
@@ -171,10 +169,13 @@ def state_changed_handler(event):
 
 
 @asyncio.coroutine
-def async_load_device_data(hass):
+def async_load_device_data(hass, config):
     """Load meta data about devices from hass configuration into DEVICES."""
     devices = yield from hass.components.device_tracker.async_load_config(
         os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
+    config_types = get_configuration_types(config)
+    _LOGGER.info("Recognised device types: " + str(config_types))
+    
     for device in devices:
         device_id = str(device.mac).lower()
         DEVICES.update({device_id: {'entity_id': device.entity_id,
@@ -184,6 +185,33 @@ def async_load_device_data(hass):
         if PROFILES.get(device_id):
             for prop in DEVICES[device_id]:
                 PROFILES[device_id].data[prop] = DEVICES[device_id][prop]
+
+
+def get_configuration_types(config):
+    res = {}
+    for type in config:
+        addresses = get_addresses_from_config(config[type])
+        for address in addresses:
+            res[address] = type
+    return res
+
+
+def get_addresses_from_config(config):
+    res = []
+    valid_keys = ['host', 'ip_address', 'mac', 'device']
+    valid_multikeys = ['hosts', 'devices']
+    if isinstance(config, dict):
+        for key, value in config.items():
+            if key in valid_keys:
+                res.append(value)
+            elif key in valid_multikeys:
+                res.extend(value)
+            else:
+                res.extend(get_addresses_from_config(config[key])
+    elif isinstance(config, list):
+        for entry in config:
+            res.extend(get_addresses_from_config(entry))
+    return res
 
 
 def get_device_information(device_id):

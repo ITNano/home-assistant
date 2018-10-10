@@ -41,10 +41,11 @@ def analyse(profile, packet):
     current_rssi = abs(packet.getlayer(RadioTap).dBm_AntSignal)
     mean = profile.data.get("mean")
     sigma = profile.data.get("standard_deviation")
-    if abs((current_rssi - mean) / sigma) > 3:
-        ssid = profile.get_id()
-        return "It is likely that " + ssid + "is a rouge access point." \
-               "Consider dissconnecting from the network!"
+    if mean and sigma:
+        if abs((current_rssi - mean) / sigma) > 3:
+            ssid = profile.get_id()
+            return "It is likely that " + ssid + "is a rouge access point." \
+                   "Consider dissconnecting from the network!"
 
 
 def profiler(profile, packet):
@@ -70,12 +71,9 @@ def on_profiling_end(profile):
     for index, value in enumerate(rssi):
         total += math.sqrt(abs(index-mean))*value
 
-    variance = total/(n-1)
+    if n >= 5: # we need at least 5 samples
+        variance = total/(n-1)
+        standard_deviation = math.sqrt(variance)
 
-    standard_deviation = math.sqrt(variance)
-
-    profile.data['mean'] = mean
-    profile.data['standard_deviation'] = standard_deviation
-
-
-
+        profile.data['mean'] = mean
+        profile.data['standard_deviation'] = standard_deviation

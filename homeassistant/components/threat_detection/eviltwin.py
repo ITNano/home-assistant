@@ -18,11 +18,11 @@ async def async_setup_platform(hass, config, async_add_entities,
     from scapy.all import Dot11Elt
     eviltwin_analyser = {'device_selector': device_selector,
                          'condition': condition,
-                         'analyse_func': analyse}
+                         'analyse_func': analyse_maxmin}
     eviltwin_profiler = {'device_selector': device_selector,
                          'condition': condition,
                          'profiler_func': profiler,
-                         'on_profiling_end': on_profiling_end}
+                         'on_profiling_end': on_profiling_end_maxmin}
 
     Profile.add_analyser(eviltwin_analyser)
     Profile.add_profiler(eviltwin_profiler)
@@ -46,6 +46,16 @@ def analyse(profile, packet):
             ssid = profile.get_id()
             return "It is likely that " + ssid + "is a rouge access point." \
                    "Consider dissconnecting from the network!"
+
+
+def analyse_maxmin(profile, packet):
+    from scapy.all import RadioTap
+    current_rssi = abs(packet.getlayer(RadioTap).dBm_AntSignal)
+    minimum = profile.data.get("rssi_min")
+    maximum = profile.data.get("rssi_max")
+    if current_rssi < minimum or current_rssi > maximum:
+        ssid = profile.get_id().split("_")[1]
+        return "A fake router may be broadcasting under the name " + ssid
 
 
 def profiler(profile, packet):
@@ -77,3 +87,12 @@ def on_profiling_end(profile):
 
         profile.data['mean'] = mean
         profile.data['standard_deviation'] = standard_deviation
+
+
+def on_profiling_end_maxmin(profile):
+    rssi = profile.data.get("rssi")
+    n = sum(rssi)
+    if n > 0:
+        filtered_rssi = [index for index, val in enumerate(rssi) if val > 0]
+        profile.data["rssi_min"] = filtered_rssi[0]
+        profile.data["rssi_max"] = filtered_rssi[-1]

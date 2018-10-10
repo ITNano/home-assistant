@@ -152,11 +152,6 @@ class ThreatDetection(Entity):
             return self._threats[-1]
 
 
-def report_threats(threats):
-    """Report found threats to user"""
-    DETECTION_OBJ.add_threats(threats)
-
-
 def state_changed_handler(event):
     """Handle what to do in the event of a state change."""
     event_dict = event.as_dict()

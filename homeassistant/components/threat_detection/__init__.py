@@ -207,7 +207,7 @@ def get_addresses_from_config(config):
             elif key in valid_multikeys:
                 res.extend(value)
             else:
-                res.extend(get_addresses_from_config(config[key])
+                res.extend(get_addresses_from_config(config[key]))
     elif isinstance(config, list):
         for entry in config:
             res.extend(get_addresses_from_config(entry))

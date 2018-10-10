@@ -43,6 +43,7 @@ PLATFORM_SCHEMA = vol.Schema({
 CAPTURER = None
 BEACON_CAPTURER = None
 DEVICES = {}
+DEVICE_TYPES = {}
 DETECTION_OBJ = None
 PROFILING_TIME = DEF_PROFILING_TIME
 STORAGE_NAME = 'td_profiles.pcl'
@@ -173,8 +174,9 @@ def async_load_device_data(hass, config):
     """Load meta data about devices from hass configuration into DEVICES."""
     devices = yield from hass.components.device_tracker.async_load_config(
         os.path.join(hass.config.config_dir, KNOWN_DEVICES), hass, 0)
-    config_types = get_configuration_types(config)
-    _LOGGER.info("Recognised device types: " + str(config_types))
+
+    global DEVICE_TYPES
+    DEVICE_TYPES = get_configuration_types(config)
     
     for device in devices:
         device_id = str(device.mac).lower()
@@ -288,6 +290,11 @@ def get_ip_profiler():
             profile.data[eth_addr][ip_addr] = {}
         container = profile.data[eth_addr][ip_addr]
         layer = pkt.getlayer(IP) if pkt.haslayer(IP) else pkt.getlayer(IPv6)
+        my_ip = layer.src if pkt.src == profile.get_id() else layer.dst
+        if my_ip not in profile.data['identifiers']:
+            profile.data['identifiers'].append(my_ip)
+            if DEVICE_TYPES.get(my_ip):
+                profile.data['device_type'] = DEVICE_TYPES[my_ip]
         container['src'] = layer.src
         container['dst'] = layer.dst
         container['count'] = container.get('count', 0) + 1
@@ -385,7 +392,9 @@ class Profile:
     def __init__(self, identifier, profiling_length=86400):
         """Initiate the profile object."""
         self._id = identifier
-        self.data = {}
+        self.data = {"identifiers": [identifier]}
+        if DEVICE_TYPES.get(self._id):
+            self.data['device_type'] = DEVICE_TYPES[self._id]
         self._profiling_end = (datetime.now() +
                                timedelta(seconds=profiling_length))
         self.reload_profilers()

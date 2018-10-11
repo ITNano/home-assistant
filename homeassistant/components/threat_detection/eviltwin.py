@@ -144,6 +144,7 @@ def on_profiling_end_mix(profile):
     Time frame for limits: 60 seconds
     Allows for asymmetric behaviour above/below the profile.
     """
+    _LOGGER.info("Running eviltwin on profiling end stuffs")
     on_profiling_end(profile)
     rssi = profile.data.get("rssi")
     mean = profile.data.get("mean")

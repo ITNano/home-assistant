@@ -72,6 +72,7 @@ def analyse_mix(profile, packet):
         limit = profile.data[limit_name]
         profile.data[list_name], detection = check_time_threshold(data, limit)
         if detection:
+            ssid = profile.get_id().split("_")[1]
             return "It is likely that " + ssid + "is a rouge access point." \
                    "Consider disconnecting from the network!"
 

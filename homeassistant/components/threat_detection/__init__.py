@@ -389,18 +389,18 @@ class Profile:
     PROFILERS = []
     ANALYSERS = []
 
-    def __init__(self, identifier, profiling_length=86400):
+    def __init__(self, identifier, profiling_time=86400):
         """Initiate the profile object."""
         self._id = identifier
         self.data = {"identifiers": [identifier]}
         if DEVICE_TYPES.get(self._id):
             self.data['device_type'] = DEVICE_TYPES[self._id]
-        self.profiling_length = profiling_length
+        self.profiling_time = profiling_time
         self._profiling_end = (datetime.now() +
-                               timedelta(seconds=profiling_length))
+                               timedelta(seconds=profiling_time))
         self.reload_profilers()
         self.reload_analysers()
-        self.start_profile_end_countdown(profiling_length)
+        self.start_profile_end_countdown(profiling_time)
 
     def start_profile_end_countdown(self, time_left):
         """Starts a timer which calls on_profiling_end when profiling ends."""
@@ -443,11 +443,11 @@ class Profile:
         if self.is_profiling():
             profiling_left = (self._profiling_end.timestamp() -
                                   datetime.now().timestamp())
-        return (self._id, self.data, profiling_left)
+        return (self._id, self.data, self.profiling_time, profiling_left)
 
     def __setstate__(self, state):
         """Loads the object from a pickle object (from file)."""
-        self._id, self.data, profiling_left = state
+        self._id, self.data, self.profiling_time, profiling_left = state
         self.reload_profilers()
         self.reload_analysers()
         _LOGGER.info("Loaded profile %s. Profiling time left: %s", self._id, str(profiling_left))

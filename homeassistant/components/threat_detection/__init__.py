@@ -87,8 +87,8 @@ def async_setup(hass, config=None):
     hass.bus.async_listen("trigger_profile_save", store_profiles)
     
     def debug_trigger_on_profiling_end(event):
-        for profile in PROFILES:
-            profile.on_profiling_end()
+        for id in PROFILES:
+            PROFILES[id].on_profiling_end()
     hass.bus.async_listen("trigger_on_profiling_end", debug_trigger_on_profiling_end)
 
     global DETECTION_OBJ

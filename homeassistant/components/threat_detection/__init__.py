@@ -395,6 +395,7 @@ class Profile:
         self.data = {"identifiers": [identifier]}
         if DEVICE_TYPES.get(self._id):
             self.data['device_type'] = DEVICE_TYPES[self._id]
+        self.profiling_length = profiling_length
         self._profiling_end = (datetime.now() +
                                timedelta(seconds=profiling_length))
         self.reload_profilers()

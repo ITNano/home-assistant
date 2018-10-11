@@ -140,7 +140,7 @@ def on_profiling_end_mix(profile):
     
     Values that are assumed in this functionality:
     Standard deviations: 3
-    Allowed increase of data points: 20%
+    Allowed increase of data points: 30%
     Time frame for limits: 60 seconds
     Allows for asymmetric behaviour above/below the profile.
     """
@@ -151,9 +151,9 @@ def on_profiling_end_mix(profile):
     profile_time = profile.profiling_time/60  # measured in minutes
     nbr_of_lower = sum([val for i, val in enumerate(rssi) if i < mean - 3 * deviation])
     profile.data["rssi_min"] = mean - 3 * deviation
-    profile.data["rssi_less_limit"] = int((nbr_of_lower/profile_time)*1.2)
+    profile.data["rssi_less_limit"] = math.ceil((nbr_of_lower/profile_time)*1.3)
     profile.data["rssi_current_below"] = []
     nbr_of_higher = sum([val for i, val in enumerate(rssi) if i > mean + 3 * deviation])
     profile.data["rssi_max"] = mean + 3 * deviation
-    profile.data["rssi_more_limit"] = int((nbr_of_higher/profile_time)*1.2)
+    profile.data["rssi_more_limit"] = math.ceil((nbr_of_higher/profile_time)*1.3)
     profile.data["rssi_current_above"] = []

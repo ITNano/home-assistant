@@ -59,6 +59,7 @@ def analyse_maxmin(profile, packet):
 
 
 def analyse_mix(profile, packet):
+    from scapy.all import RadioTap
     current_rssi = abs(packet.getlayer(RadioTap).dBm_AntSignal)
     list_name, limit_name = (None, None)
     if current_rssi > profile.data.get("rssi_more_limit"):

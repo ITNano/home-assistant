@@ -29,6 +29,7 @@ DEFAULT_PLATFORMS = ['botnet', 'eviltwin']
 @asyncio.coroutine
 def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the platform."""
+    _LOGGER.info("Config: %s", str(config))
     platforms = DEFAULT_PLATFORMS
     if config.get(CONF_EXCLUDE):
         exclude = config.get(CONF_EXCLUDE)

@@ -62,9 +62,9 @@ def analyse_mix(profile, packet):
     from scapy.all import RadioTap
     current_rssi = abs(packet.getlayer(RadioTap).dBm_AntSignal)
     list_name, limit_name = (None, None)
-    if current_rssi > profile.data.get("rssi_more_limit"):
+    if current_rssi > profile.data.get("rssi_max"):
         list_name, limit_name = ("rssi_current_above", "rssi_more_limit")
-    elif current_rssi < profile.data.get("rssi_less_limit"):
+    elif current_rssi < profile.data.get("rssi_min"):
         list_name, limit_name = ("rssi_current_below", "rssi_less_limit")
 
     if list_name and limit_name:
@@ -149,9 +149,11 @@ def on_profiling_end_mix(profile):
     mean = profile.data.get("mean")
     deviation = profile.data.get("standard_deviation")
     profile_time = profile.profiling_time/60  # measured in minutes
-    nbr_of_lower = sum([val for i, val in enumerate(rssi) if i < mean-3*deviation])
+    nbr_of_lower = sum([val for i, val in enumerate(rssi) if i < mean - 3 * deviation])
+    profile.data["rssi_min"] = mean - 3 * deviation
     profile.data["rssi_less_limit"] = int((nbr_of_lower/profile_time)*1.2)
     profile.data["rssi_current_below"] = []
-    nbr_of_higher = sum([val for i, val in enumerate(rssi) if i > mean+3*deviation])
+    nbr_of_higher = sum([val for i, val in enumerate(rssi) if i > mean + 3 * deviation])
+    profile.data["rssi_max"] = mean + 3 * deviation
     profile.data["rssi_more_limit"] = int((nbr_of_higher/profile_time)*1.2)
     profile.data["rssi_current_above"] = []

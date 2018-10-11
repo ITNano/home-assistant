@@ -149,9 +149,9 @@ def on_profiling_end_mix(profile):
     mean = profile.data.get("mean")
     deviation = profile.data.get("standard_deviation")
     profile_time = profile.profiling_time/60  # measured in minutes
-    nbr_of_lower = sum([val for val in rssi if val < mean - 3 * deviation])
+    nbr_of_lower = sum([val for i, val in enumerate(rssi) if i < mean-3*deviation])
     profile.data["rssi_less_limit"] = int((nbr_of_lower/profile_time)*1.2)
     profile.data["rssi_current_below"] = []
-    nbr_of_higher = sum([val for val in rssi if val > mean + 3 * deviation])
+    nbr_of_higher = sum([val for i, val in enumerate(rssi) if i > mean+3*deviation])
     profile.data["rssi_more_limit"] = int((nbr_of_higher/profile_time)*1.2)
     profile.data["rssi_current_above"] = []

@@ -85,6 +85,11 @@ def async_setup(hass, config=None):
         save_profiles(join(hass.config.config_dir, STORAGE_NAME))
     hass.bus.async_listen(const.EVENT_HOMEASSISTANT_STOP, store_profiles)
     hass.bus.async_listen("trigger_profile_save", store_profiles)
+    
+    def debug_trigger_on_profiling_end(event):
+        for profile in PROFILES:
+            profile.on_profiling_end()
+    hass.bus.async_listen("trigger_on_profiling_end", debug_trigger_on_profiling_end)
 
     global DETECTION_OBJ
     DETECTION_OBJ = ThreatDetection(

@@ -18,11 +18,11 @@ async def async_setup_platform(hass, config, async_add_entities,
     from scapy.all import Dot11Elt
     eviltwin_analyser = {'device_selector': device_selector,
                          'condition': condition,
-                         'analyse_func': analyse_maxmin}
+                         'analyse_func': analyse_mix}
     eviltwin_profiler = {'device_selector': device_selector,
                          'condition': condition,
                          'profiler_func': profiler,
-                         'on_profiling_end': on_profiling_end_maxmin}
+                         'on_profiling_end': on_profiling_end_mix}
 
     Profile.add_analyser(eviltwin_analyser)
     Profile.add_profiler(eviltwin_profiler)

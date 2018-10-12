@@ -113,8 +113,8 @@ def check_time_threshold(time_list, limit):
 
 
 def rpi_moved():
-    other_aps = [p for p in all_profiles() if (p.get_id().startswith("AP_")
-                                               and p.get_id() != "AP_"+AP)]
+    other_aps = [profile for id, profile in all_profiles().values() if (
+                 id.startswith("AP_") and id != "AP_"+AP)]
     time_limit = datetime.datetime.now().timestamp() - 60
     count = 0
     for ap in other_aps:

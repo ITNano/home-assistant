@@ -47,9 +47,13 @@ def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
 
 def load_platform(hass, platform, config):
     platform_config = {CONF_PLATFORM: platform}
+    _LOGGER.info("Trying to find config for platform %s in config %s", platform, str(config))
     if config.get(CONF_MODULES):
+        _LOGGER.info("Modules list exists")
         for conf in config[CONF_MODULES]:
+            _LOGGER.info("Trying out %s", str(conf)
             if conf.get(CONF_PLATFORM) == platform:
+                _LOGGER.info("Correct one found. Applying it!")
                 platform_config = conf
     hass.async_create_task(async_load_platform(
         hass, 'threat_detection', platform, hass_config=platform_config

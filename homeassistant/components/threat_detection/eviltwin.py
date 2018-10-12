@@ -7,10 +7,13 @@ https://home-assistant.io/components/threat_detection/eviltwin/
 
 import math
 import datetime
+import logging
 from homeassistant.components.threat_detection import (Profile,
                                                        PLATFORM_SCHEMA,
                                                        DOMAIN
                                                        )
+
+_LOGGER = logging.getLogger(__name__)
 
 async def async_setup_platform(hass, config, async_add_entities,
                                discovery_info=None):

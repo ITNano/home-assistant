@@ -51,7 +51,7 @@ def load_platform(hass, platform, config):
     if config.get(CONF_MODULES):
         _LOGGER.info("Modules list exists")
         for conf in config[CONF_MODULES]:
-            _LOGGER.info("Trying out %s", str(conf)
+            _LOGGER.info("Trying out %s", str(conf))
             if conf.get(CONF_PLATFORM) == platform:
                 _LOGGER.info("Correct one found. Applying it!")
                 platform_config = conf

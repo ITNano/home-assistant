@@ -9,11 +9,15 @@ import math
 import datetime
 import logging
 from homeassistant.components.threat_detection import (Profile,
+                                                       all_profiles,
                                                        PLATFORM_SCHEMA,
                                                        DOMAIN
                                                        )
 
 _LOGGER = logging.getLogger(__name__)
+
+# AP name. Supposed to be applied in configuration.
+AP = 'ASUS'
 
 async def async_setup_platform(hass, config, async_add_entities,
                                discovery_info=None):
@@ -37,8 +41,10 @@ def condition(profile, packet):
     from scapy.all import Dot11Elt, RadioTap
     return packet.haslayer(Dot11Elt) and packet.haslayer(RadioTap)
 
+
 def device_selector(profile):
     return profile.get_id().startswith("AP_")
+
 
 def analyse(profile, packet):
     from scapy.all import RadioTap
@@ -64,8 +70,9 @@ def analyse_maxmin(profile, packet):
 
 
 def analyse_mix(profile, packet):
-    from scapy.all import RadioTap
+    from scapy.all import RadioTap, Dot11Elt
     current_rssi = abs(packet.getlayer(RadioTap).dBm_AntSignal)
+    ssid = profile.get_id().split("_")[1]
     list_name, limit_name = (None, None)
     if current_rssi > profile.data.get("rssi_max"):
         list_name, limit_name = ("rssi_current_above", "rssi_more_limit")
@@ -77,9 +84,13 @@ def analyse_mix(profile, packet):
         limit = profile.data[limit_name]
         profile.data[list_name], detection = check_time_threshold(data, limit)
         if detection:
-            ssid = profile.get_id().split("_")[1]
-            return "It is likely that " + ssid + "is a rouge access point." \
-                   "Consider disconnecting from the network!"
+            if ssid == AP:
+                if not rpi_moved():
+                    return "It is likely that " + ssid + "is a rouge access "\
+                           "point. Consider disconnecting from the network!"
+            else:
+                current_time = datetime.datetime.now().timestamp()
+                profile.data["rssi_detection"] = current_time
 
 
 def check_time_threshold(time_list, limit):
@@ -99,6 +110,18 @@ def check_time_threshold(time_list, limit):
         return [], True
     else:
         return new_list, False
+
+
+def rpi_moved():
+    other_aps = [p for p in all_profiles() if (p.get_id().startswith("AP_")
+                                               and p.get_id() != "AP_"+AP)
+    time_limit = datetime.datetime.now().timestamp() - 60
+    count = 0
+    for ap in other_aps:
+        if ap.data.get("rssi_detection", 0) > time_limit:
+            count += 1
+
+    return len(other_aps) > 0 and count > other_aps/2
 
 
 def profiler(profile, packet):

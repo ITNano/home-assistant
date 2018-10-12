@@ -9,7 +9,7 @@ import logging
 import asyncio
 
 import voluptuous as vol
-from homeassistant.const import CONF_EXCLUDE, CONF_INCLUDE
+from homeassistant.const import CONF_EXCLUDE, CONF_INCLUDE, CONF_PLATFORM
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.discovery import async_load_platform
 
@@ -17,10 +17,12 @@ from homeassistant.components.threat_detection import (PLATFORM_SCHEMA,
                                                        DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
+CONF_MODULES = 'modules'
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_EXCLUDE): vol.All(cv.ensure_list, [cv.string]),
     vol.Optional(CONF_INCLUDE) : vol.All(cv.ensure_list, [cv.string]),
+    vol.Optional(CONF_MODULES) : vol.All(cv.ensure_list),
 })
 
 DEFAULT_PLATFORMS = ['botnet', 'eviltwin']
@@ -44,6 +46,11 @@ def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
 
 
 def load_platform(hass, platform, config):
+    platform_config = {CONF_PLATFORM: platform}
+    if config.get(CONF_MODULES):
+        for conf in config[CONF_MODULES]:
+            if conf.get(CONF_PLATFORM) == platform:
+                platform_config = conf
     hass.async_create_task(async_load_platform(
-        hass, 'threat_detection', platform, hass_config=config
+        hass, 'threat_detection', platform, hass_config=platform_config
     ))

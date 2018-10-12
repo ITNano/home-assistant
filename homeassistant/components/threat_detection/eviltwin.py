@@ -16,6 +16,8 @@ async def async_setup_platform(hass, config, async_add_entities,
                                discovery_info=None):
     """Setup the platform."""
     from scapy.all import Dot11Elt
+    _LOGGER.info("EvilTwin using config: " + str(config))
+
     eviltwin_analyser = {'device_selector': device_selector,
                          'condition': condition,
                          'analyse_func': analyse_mix}

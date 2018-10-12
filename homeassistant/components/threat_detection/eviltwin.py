@@ -70,6 +70,12 @@ def analyse_maxmin(profile, packet):
 
 
 def analyse_mix(profile, packet):
+    # Just check that all data exists
+    if not profile.data.get("rssi_max"):
+        _LOGGER.warning("Found eviltwin profile without profile end data")
+        on_profiling_end_mix(profile)
+
+    # Do analyse
     from scapy.all import RadioTap, Dot11Elt
     current_rssi = abs(packet.getlayer(RadioTap).dBm_AntSignal)
     ssid = profile.get_id().split("_")[1]

@@ -121,7 +121,7 @@ def rpi_moved():
         if ap.data.get("rssi_detection", 0) > time_limit:
             count += 1
 
-    return len(other_aps) > 0 and count > other_aps/2
+    return len(other_aps) > 0 and count > len(other_aps)/2
 
 
 def profiler(profile, packet):

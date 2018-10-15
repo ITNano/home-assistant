@@ -73,6 +73,7 @@ def analyse_mix(profile, packet):
     # Just check that all data exists
     if not profile.data.get("rssi_max"):
         _LOGGER.warning("Found eviltwin profile without profile end data")
+        return
 
     # Do analyse
     from scapy.all import RadioTap, Dot11Elt

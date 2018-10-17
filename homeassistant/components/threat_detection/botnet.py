@@ -58,11 +58,14 @@ def get_dns_profiler():
         return True
     def condition(prof, pkt):
         if pkt.haslayer(DNSRR):
-            domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
-            data = prof.data.get("dns", {}).get(domain, [])
-            return (prof.get_id() == pkt.dst and
-                    (prof.is_profiling() or data) and
-                    pkt.getlayer(DNSRR).rdata not in data)
+            layer = pkt.getlayer(DNSRR)
+            # Listens only to IPv4/IPv6 addresses (may need to be extended)
+            if layer.type in ['A', 'AAAA']:
+                domain = layer.rrname.decode('utf-8')
+                data = prof.data.get("dns", {}).get(domain, [])
+                return (prof.get_id() == pkt.dst and
+                        (prof.is_profiling() or data) and
+                        layer.rdata not in data)
     def profiler(profile, pkt):
         domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
         ip = pkt.getlayer(DNSRR).rdata

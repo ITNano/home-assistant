@@ -9,7 +9,7 @@ import subprocess
 import os
 import json
 from os.path import dirname, basename, isfile, join, getsize
-from threading import Lock, Timer
+from threading import Timer
 from datetime import datetime, timedelta
 import asyncio
 import pickle
@@ -666,31 +666,17 @@ class PacketCapturer:
             """Create a handler."""
             super(PacketCapturer.PacketCaptureHandler, self).__init__()
             self.callback = callback
-            self.lock = Lock()
 
         def on_created(self, event):
             """Read, interpret and remove existing pcap files."""
-            # Avoid concurrent reads from same files
-            if not self.lock.acquire(blocking=False):
-                return
-
             from scapy.all import rdpcap, PacketList
-            path = dirname(event.src_path)
-            # Ignore directories and empty files
-            all_files = [f for f in os.listdir(path) if (isfile(join(path, f))
-                         and getsize(join(path, f)) > 0)]
-            files = list(filter(lambda f: f.endswith('.pcap'), all_files))
-            # Parse data from pcap format
-            _LOGGER.debug("Reading network files")
-            data = [safe_exc(rdpcap, [], join(path, file)) for file in files]
-            _LOGGER.debug("Done reading network files")
-            # Remove read files so data are only read once
-            for file in files:
-                safe_exc(os.remove, None, join(path, file))
-            # Allow new files to be read
-            self.lock.release()
-            # Notify the user of the found data
-            self.callback(PacketList([pkt for pkts in data for pkt in pkts]))
+            filepath = event.src_path
+            if filepath.endswith('.pcap'):
+                _LOGGER.debug("Started reading network file")
+                pkts = safe_exc(rdpcap, [], filepath)
+                _LOGGER.debug("Done reading network file")
+                safe_exc(os.remove, None, filepath)
+                self.callback(pkts)
 
 
 def safe_exc(func, default, *args):

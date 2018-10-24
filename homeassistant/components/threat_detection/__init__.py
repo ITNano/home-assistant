@@ -8,7 +8,7 @@ todo add where to find documentation for the component.
 import subprocess
 import os
 import json
-from os.path import dirname, basename, isfile, join, getsize
+from os.path import join, getsize
 from threading import Timer
 from datetime import datetime, timedelta
 import asyncio
@@ -666,17 +666,32 @@ class PacketCapturer:
             """Create a handler."""
             super(PacketCapturer.PacketCaptureHandler, self).__init__()
             self.callback = callback
+            self.unread_list = []
 
         def on_created(self, event):
-            """Read, interpret and remove existing pcap files."""
-            from scapy.all import rdpcap, PacketList
+            """Process file if it has > 0 bytes, otherwise remember it."""
             filepath = event.src_path
             if filepath.endswith('.pcap'):
-                _LOGGER.debug("Started reading network file " + str(filepath))
-                pkts = safe_exc(rdpcap, [], filepath)
-                _LOGGER.debug("Done reading network file")
-                safe_exc(os.remove, None, filepath)
-                self.callback(pkts)
+                if getsize(filepath) > 0:
+                    self.read_file(filepath)
+                else:
+                    self.unread_list.append(filepath)
+
+        def on_modified(self, event):
+            """Process file it has been remembered since on_created."""
+            filepath = event.src_path
+            if filepath.endswith('.pcap') and getsize(filepath) > 0:
+                if filepath in self.unread_list:
+                    self.unread_list.remove(filepath)
+                    self.read_file(filepath)
+
+        def read_file(self, filepath):
+            from scapy.all import rdpcap, PacketList
+            _LOGGER.debug("Started reading network file " + str(filepath))
+            pkts = safe_exc(rdpcap, [], filepath)
+            _LOGGER.debug("Done reading network file")
+            safe_exc(os.remove, None, filepath)
+            self.callback(pkts)
 
 
 def safe_exc(func, default, *args):

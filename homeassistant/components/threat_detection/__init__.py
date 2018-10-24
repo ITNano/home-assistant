@@ -672,7 +672,7 @@ class PacketCapturer:
             from scapy.all import rdpcap, PacketList
             filepath = event.src_path
             if filepath.endswith('.pcap'):
-                _LOGGER.debug("Started reading network file")
+                _LOGGER.debug("Started reading network file " + str(filepath))
                 pkts = safe_exc(rdpcap, [], filepath)
                 _LOGGER.debug("Done reading network file")
                 safe_exc(os.remove, None, filepath)

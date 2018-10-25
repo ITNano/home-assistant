@@ -262,6 +262,13 @@ def add_profile_callbacks():
 def get_eth_profiler():
     from pypacker.layer12.ethernet import Ethernet
     def profile_eth(profile, pkt):
+        # Update eventual identifiers
+        if eth_addr(pkt.src) == profile.get_id():
+            profile.add_identifier(pretty_eth_addr(pkt.src))
+        else:
+            profile.add_identifier(pretty_eth_addr(pkt.dst))
+
+        # Profile the rest
         addr = get_eth_address(profile, pkt)
         if not profile.data.get(addr):
             profile.data[addr] = {}
@@ -285,10 +292,7 @@ def get_ip_profiler():
         container = profile.data[eth_address][ip_address]
         layer = pkt[ip.IP] if pkt[ip.IP] else pkt[ip6.IP6]
         my_ip = pretty_ip_addr(layer.src) if eth_addr(pkt.src) == profile.get_id() else pretty_ip_addr(layer.dst)
-        if my_ip not in profile.data['identifiers']:
-            profile.data['identifiers'].append(my_ip)
-            if DEVICE_TYPES.get(my_ip):
-                profile.data['device_type'] = DEVICE_TYPES[my_ip]
+        profile.add_identifier(my_ip)
         container['src'] = ip_addr(layer.src)
         container['dst'] = ip_addr(layer.dst)
         container['count'] = container.get('count', 0) + 1
@@ -403,18 +407,22 @@ class Profile:
     PROFILERS = []
     ANALYSERS = []
 
-    def __init__(self, identifier, profiling_time=86400):
+    def __init__(self, profile_id, profiling_time=86400):
         """Initiate the profile object."""
-        self._id = identifier
-        self.data = {"identifiers": [identifier]}
-        if DEVICE_TYPES.get(self._id):
-            self.data['device_type'] = DEVICE_TYPES[self._id]
+        self._id = profile_id
+        self.data = {"identifiers": []}
         self.profiling_time = profiling_time
         self._profiling_end = (datetime.now() +
                                timedelta(seconds=profiling_time))
         self.reload_profilers()
         self.reload_analysers()
         self.start_profile_end_countdown(profiling_time)
+
+    def add_identifier(self, identifier):
+        if identifier not in self.data['identifiers']:
+            self.data['identifiers'].append(identifier)
+            if DEVICE_TYPES.get(identifier):
+                self.data['device_type'] = DEVICE_TYPES[identifier]
 
     def start_profile_end_countdown(self, time_left):
         """Starts a timer which calls on_profiling_end when profiling ends."""
@@ -598,7 +606,7 @@ def get_IDs_from_packet(packet):
     """
     from pypacker.layer12 import ethernet, radiotap, ieee80211
     if isinstance(packet, ethernet.Ethernet):
-        return [pretty_eth_addr(packet.src), pretty_eth_addr(packet.dst)]
+        return [eth_addr(packet.src), eth_addr(packet.dst)]
     elif isinstance(packet, radiotap.Radiotap):
         for entry in packet[ieee80211.IEEE80211.Beacon].params:
             if entry.id == 0:

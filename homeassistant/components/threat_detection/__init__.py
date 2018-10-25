@@ -360,7 +360,7 @@ def pretty_ip_addr(addr):
         return '.'.join([str(int.from_bytes(addr[i:i+1], byteorder='big')) for i in range(len(addr))])
     else:
         tmp = addr.hex()
-        return ':'join([tmp[i:i+2] for i in range(len(tmp)/2)])
+        return ':'.join([tmp[i:i+2] for i in range(len(tmp)/2)])
 
 
 def get_eth_address(profile, pkt):

@@ -182,11 +182,8 @@ def async_load_device_data(hass, config):
         device_id = str(device.mac).lower()
         DEVICES.update({device_id: {'entity_id': device.entity_id,
                                     'name': device.name}})
-
-        # Backwards compat (add devices already existing)
-        if PROFILES.get(device_id):
-            for prop in DEVICES[device_id]:
-                PROFILES[device_id].data[prop] = DEVICES[device_id][prop]
+    for profile in PROFILES:
+        profile.update_meta_properties()
 
 
 def get_configuration_types(config):
@@ -421,8 +418,17 @@ class Profile:
     def add_identifier(self, identifier):
         if identifier not in self.data['identifiers']:
             self.data['identifiers'].append(identifier)
+            self.update_meta_properties()
+
+    def update_meta_properties(self):
+        for identifier in self.data['identifiers']:
             if DEVICE_TYPES.get(identifier):
                 self.data['device_type'] = DEVICE_TYPES[identifier]
+            if DEVICES.get(identifier):
+                for prop in DEVICES[identifier]:
+                    self.data[prop] = DEVICES[identifier][prop]
+        self.reload_profilers()
+        self.reload_analysers()
 
     def start_profile_end_countdown(self, time_left):
         """Starts a timer which calls on_profiling_end when profiling ends."""

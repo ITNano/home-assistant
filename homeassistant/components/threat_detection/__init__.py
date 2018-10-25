@@ -352,7 +352,7 @@ def eth_addr(raw):
 
 
 def pretty_eth_addr(raw):
-    tmp = addr.hex()
+    tmp = raw.hex()
     return ':'.join(tmp[i:i+2] for i in range(len(tmp)/2))
 
 
@@ -360,11 +360,11 @@ def ip_addr(raw):
     return raw.hex()
 
 
-def pretty_ip_addr(addr):
-    if len(addr) == 4:  # IPv4
-        return '.'.join([str(int.from_bytes(addr[i:i+1], byteorder='big')) for i in range(len(addr))])
+def pretty_ip_addr(raw):
+    if len(raw) == 4:  # IPv4
+        return '.'.join([str(int.from_bytes(raw[i:i+1], byteorder='big')) for i in range(len(raw))])
     else:
-        tmp = addr.hex()
+        tmp = raw.hex()
         return ':'.join(tmp[i:i+2] for i in range(len(tmp)/2))
 
 

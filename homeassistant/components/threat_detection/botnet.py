@@ -15,6 +15,10 @@ from homeassistant.components.threat_detection import (Profile,
                                                        PLATFORM_SCHEMA,
                                                        DOMAIN)
 
+DNS_RECORD_A = 12848
+DNS_RECORD_AAAA = -1
+VALID_DNS_TYPES = [DNS_RECORD_A, DNS_RECORD_AAAA]
+
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the platform."""
@@ -57,28 +61,28 @@ def check_botnet(proto):
 
 
 def get_dns_profiler():
-    from scapy.all import DNSRR
+    from pypacker.layer567 import dns
     def selector(prof):
         return True
     def condition(prof, pkt):
-        if pkt.haslayer(DNSRR):
-            layer = pkt.getlayer(DNSRR)
-            # Listens only to IPv4/IPv6 addresses (may need to be extended)
-            if layer.type in ['A', 'AAAA']:
-                domain = layer.rrname.decode('utf-8')
+        if pkt[dns.DNS]:
+            layer = pkt[dns.DNS]
+            if layer.queries and [answer for answer in layer.answers if answer.type in VALID_DNS_TYPES]:
+                domain = layer.queries[0].name.decode('utf-8')
                 data = prof.data.get("dns", {}).get(domain, [])
-                return (prof.get_id() == pkt.dst and
-                        (prof.is_profiling() or data) and
-                        layer.rdata not in data)
+                if (prof.get_id() == eth_addr(pkt.dst) and (prof.is_profiling() or data)):
+                    return True
     def profiler(profile, pkt):
-        domain = pkt.getlayer(DNSRR).rrname.decode('utf-8')
-        ip = pkt.getlayer(DNSRR).rdata
+        layer = pkt[dns.DNS]
+        domain = layer.queries[0].name.decode('utf-8')
         if not profile.data.get("dns"):
             profile.data["dns"] = {}
         if not profile.data["dns"].get(domain):
             profile.data["dns"][domain] = []
-        if ip not in profile.data["dns"][domain]:
-            profile.data["dns"][domain].append(ip)
+        for answer in layer.answers if answer.type in VALID_DNS_TYPES:
+            ip = ip_addr(answer.address)
+            if ip not in profile.data["dns"][domain]:
+                profile.data["dns"][domain].append(ip)
     return {'device_selector': selector,
             'condition': condition,
             'profiler_func': profiler,

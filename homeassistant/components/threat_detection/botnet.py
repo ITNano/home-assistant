@@ -7,6 +7,8 @@ https://home-assistant.io/components/threat_detection/botnet/
 
 from datetime import datetime
 from homeassistant.components.threat_detection import (Profile,
+                                                       eth_addr, ip_addr,
+                                                       pretty_ip_addr,
                                                        get_eth_address,
                                                        get_ip_address,
                                                        profile_packet,
@@ -16,39 +18,41 @@ from homeassistant.components.threat_detection import (Profile,
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the platform."""
-    from scapy.all import IP, IPv6
+    from pypacker.layer3 import ip, ip6
     botnet_analyser_ipv4 = {'device_selector': (lambda prof: True),
-                            'condition': botnet_condition(IP),
-                            'analyse_func': check_botnet(IP)}
+                            'condition': botnet_condition(ip.IP),
+                            'analyse_func': check_botnet(ip.IP)}
     botnet_analyser_ipv6 = {'device_selector': (lambda prof: True),
-                            'condition': botnet_condition(IPv6),
-                            'analyse_func': check_botnet(IPv6)}
+                            'condition': botnet_condition(ip6.IP6),
+                            'analyse_func': check_botnet(ip6.IP6)}
     Profile.add_analyser(botnet_analyser_ipv4)
     Profile.add_analyser(botnet_analyser_ipv6)
     Profile.add_profiler(get_dns_profiler())
 
 
 def botnet_condition(proto):
-    return lambda prof, pkt: pkt.haslayer(proto) and prof.get_id() == pkt.src
+    return lambda prof, pkt: pkt[proto] and prof.get_id() == eth_addr(pkt.src)
 
 
 def check_botnet(proto):
     def check(prof, pkt):
-        eth_addr = get_eth_address(prof, pkt)
-        ip_addr = get_ip_address(prof, pkt)
-        records = prof.data.get(eth_addr, {}).get(ip_addr, {}).get('count')
+        eth_address = get_eth_address(prof, pkt)
+        ip_address = get_ip_address(prof, pkt)
+        records = prof.data.get(eth_address, {}).get(ip_address, {}).get('count')
         if not records:
             dns_entries = prof.data.get("dns", {})
-            remote_ip = pkt.getlayer(proto).dst
+            remote_ip = ip_addr(pkt[proto].dst)
             if [ip for entry in dns_entries.values() for ip in entry if ip == remote_ip]:
                 # Service has changed IP. Update profile.
                 profile_packet(prof, pkt)
             else:
                 # Botnet device detected
-                ip = pkt.getlayer(proto)
+                layer = pkt[proto]
                 return ("Potential botnet activity detected. Device %s sent"
                         " data to %s at %s"
-                       ) % (ip.src, ip.dst, datetime.now().strftime('%H:%M'))
+                        ) % (pretty_ip_addr(layer.src),
+                             pretty_ip_addr(layer.dst),
+                             datetime.now().strftime('%H:%M'))
     return check
 
 

@@ -690,7 +690,7 @@ class PacketCapturer:
                       f.endswith('.pcap'))]
             # Parse data from pcap format
             _LOGGER.debug("Reading network files")
-            data = [pkt for file in files for pkt in read_pcap(file)]
+            data = [pkt for file in files for pkt in self.read_pcap(file)]
             _LOGGER.debug("Done reading network files")
             # Remove read files so data are only read once
             for file in files:

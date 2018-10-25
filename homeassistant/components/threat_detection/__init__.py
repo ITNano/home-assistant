@@ -582,7 +582,7 @@ def get_IDs_from_packet(packet):
     elif isinstance(packet, radiotap.Radiotap):
         for entry in packet[ieee80211.IEEE80211.Beacon].params:
             if entry.id == 0:
-                return ["AP_" + entry.body_bytes.decode('utf-8')
+                return ["AP_" + entry.body_bytes.decode('utf-8')]
     return []
 
 

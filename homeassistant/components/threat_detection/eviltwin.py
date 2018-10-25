@@ -18,11 +18,11 @@ _LOGGER = logging.getLogger(__name__)
 
 # AP name. Supposed to be applied in configuration.
 AP = 'ASUS'
+ANT_SIGNAL_DBM = 536870912
 
 async def async_setup_platform(hass, config, async_add_entities,
                                discovery_info=None):
     """Setup the platform."""
-    from scapy.all import Dot11Elt
     _LOGGER.info("EvilTwin using config: " + str(config))
 
     eviltwin_analyser = {'device_selector': device_selector,
@@ -38,35 +38,41 @@ async def async_setup_platform(hass, config, async_add_entities,
 
 
 def condition(profile, packet):
-    from scapy.all import Dot11Elt, RadioTap
-    return packet.haslayer(Dot11Elt) and packet.haslayer(RadioTap)
+    from pypacker.layer12 import radiotap, ieee80211
+    return (packet[ieee80211.IEEE80211.Beacon] and
+            isinstance(packet, radiotap.Radiotap))
 
 
 def device_selector(profile):
     return profile.get_id().startswith("AP_")
 
 
-def analyse(profile, packet):
-    from scapy.all import RadioTap
+def get_signal_strength(packet):
+    dBm = [val for (key, val) in packet.flags if key == ANT_SIGNAL_DBM]
+    if dBm:
+        return abs(int.from_bytes(dBm[0], byteorder='little', signed=True))
 
-    current_rssi = abs(packet.getlayer(RadioTap).dBm_AntSignal)
-    mean = profile.data.get("mean")
-    sigma = profile.data.get("standard_deviation")
-    if mean and sigma:
-        if abs((current_rssi - mean) / sigma) > 3:
-            ssid = profile.get_id()
-            return "It is likely that " + ssid + "is a rouge access point." \
-                   "Consider disconnecting from the network!"
+
+def analyse(profile, packet):
+    current_rssi = get_signal_strength(packet)
+    if current_rssi:
+        mean = profile.data.get("mean")
+        sigma = profile.data.get("standard_deviation")
+        if mean and sigma:
+            if abs((current_rssi - mean) / sigma) > 3:
+                ssid = profile.get_id().split("_")[1]
+                return "It is likely that " + ssid + "is a rogue access " \
+                       "point. Consider disconnecting it from the network!"
 
 
 def analyse_maxmin(profile, packet):
-    from scapy.all import RadioTap
-    current_rssi = abs(packet.getlayer(RadioTap).dBm_AntSignal)
-    minimum = profile.data.get("rssi_min")
-    maximum = profile.data.get("rssi_max")
-    if current_rssi < minimum or current_rssi > maximum:
-        ssid = profile.get_id().split("_")[1]
-        return "A fake router may be broadcasting under the name " + ssid
+    current_rssi = get_signal_strength(packet)
+    if current_rssi:
+        minimum = profile.data.get("rssi_min")
+        maximum = profile.data.get("rssi_max")
+        if current_rssi < minimum or current_rssi > maximum:
+            ssid = profile.get_id().split("_")[1]
+            return "A fake router may be broadcasting under the name " + ssid
 
 
 def analyse_mix(profile, packet):
@@ -75,9 +81,13 @@ def analyse_mix(profile, packet):
         _LOGGER.warning("Found eviltwin profile without profile end data")
         return
 
+    # Get signal strength, stop if not available
+    current_rssi = get_signal_strength(packet)
+    if not current_rssi:
+        _LOGGER.warning("Found RadioTap header without signal strength")
+        return
+
     # Do analyse
-    from scapy.all import RadioTap, Dot11Elt
-    current_rssi = abs(packet.getlayer(RadioTap).dBm_AntSignal)
     ssid = profile.get_id().split("_")[1]
     list_name, limit_name = (None, None)
     if current_rssi > profile.data.get("rssi_max"):
@@ -131,14 +141,13 @@ def rpi_moved():
 
 
 def profiler(profile, packet):
-    from scapy.all import RadioTap
     rssi = profile.data.get("rssi")
-
     if not rssi:
         profile.data['rssi'] = [0]*150
 
-    current_rssi = abs(packet.getlayer(RadioTap).dBm_AntSignal)
-    profile.data['rssi'][current_rssi] += 1
+    current_rssi = get_signal_strength(packet)
+    if current_rssi:
+        profile.data['rssi'][current_rssi] += 1
 
 
 def on_profiling_end(profile):

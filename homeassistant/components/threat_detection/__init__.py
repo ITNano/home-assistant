@@ -284,7 +284,7 @@ def get_ip_profiler():
             profile.data[eth_address][ip_address] = {}
         container = profile.data[eth_address][ip_address]
         layer = pkt[ip.IP] if pkt[ip.IP] else pkt[ip6.IP6]
-        my_ip = ip_addr(layer.src) if eth_addr(pkt.src) == profile.get_id() else ip_addr(layer.dst)
+        my_ip = pretty_ip_addr(layer.src) if eth_addr(pkt.src) == profile.get_id() else pretty_ip_addr(layer.dst)
         if my_ip not in profile.data['identifiers']:
             profile.data['identifiers'].append(my_ip)
             if DEVICE_TYPES.get(my_ip):
@@ -351,6 +351,11 @@ def eth_addr(raw):
     return raw.hex()
 
 
+def pretty_eth_addr(raw):
+    tmp = addr.hex()
+    return ':'.join(tmp[i:i+2] for i in range(len(tmp)/2))
+
+
 def ip_addr(raw):
     return raw.hex()
 
@@ -360,7 +365,7 @@ def pretty_ip_addr(addr):
         return '.'.join([str(int.from_bytes(addr[i:i+1], byteorder='big')) for i in range(len(addr))])
     else:
         tmp = addr.hex()
-        return ':'.join([tmp[i:i+2] for i in range(len(tmp)/2)])
+        return ':'.join(tmp[i:i+2] for i in range(len(tmp)/2))
 
 
 def get_eth_address(profile, pkt):
@@ -593,7 +598,7 @@ def get_IDs_from_packet(packet):
     """
     from pypacker.layer12 import ethernet, radiotap, ieee80211
     if isinstance(packet, ethernet.Ethernet):
-        return [eth_addr(packet.src), eth_addr(packet.dst)]
+        return [pretty_eth_addr(packet.src), pretty_eth_addr(packet.dst)]
     elif isinstance(packet, radiotap.Radiotap):
         for entry in packet[ieee80211.IEEE80211.Beacon].params:
             if entry.id == 0:

@@ -339,7 +339,7 @@ def get_udp_profiler():
         container['maxsize'] = max(container.get('maxsize', 0), len(layer.body_bytes))
 
     return {'device_selector': lambda prof: True,
-            'condition': lambda prof, pkt: pkt[udp.UDP]
+            'condition': lambda prof, pkt: pkt[udp.UDP],
             'profiler_func': profile_udp}
 
 

@@ -79,10 +79,11 @@ def get_dns_profiler():
             profile.data["dns"] = {}
         if not profile.data["dns"].get(domain):
             profile.data["dns"][domain] = []
-        for answer in layer.answers if answer.type in VALID_DNS_TYPES:
-            ip = ip_addr(answer.address)
-            if ip not in profile.data["dns"][domain]:
-                profile.data["dns"][domain].append(ip)
+        for answer in layer.answers:
+            if answer.type in VALID_DNS_TYPES:
+                ip = ip_addr(answer.address)
+                if ip not in profile.data["dns"][domain]:
+                    profile.data["dns"][domain].append(ip)
     return {'device_selector': selector,
             'condition': condition,
             'profiler_func': profiler,

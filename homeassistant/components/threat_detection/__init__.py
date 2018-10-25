@@ -353,7 +353,7 @@ def eth_addr(raw):
 
 def pretty_eth_addr(raw):
     tmp = raw.hex()
-    return ':'.join(tmp[i:i+2] for i in range(len(tmp)/2))
+    return ':'.join(tmp[i:i+2] for i in range(int(len(tmp)/2)))
 
 
 def ip_addr(raw):
@@ -365,7 +365,7 @@ def pretty_ip_addr(raw):
         return '.'.join([str(int.from_bytes(raw[i:i+1], byteorder='big')) for i in range(len(raw))])
     else:
         tmp = raw.hex()
-        return ':'.join(tmp[i:i+2] for i in range(len(tmp)/2))
+        return ':'.join(tmp[i:i+2] for i in range(int(len(tmp)/2)))
 
 
 def get_eth_address(profile, pkt):

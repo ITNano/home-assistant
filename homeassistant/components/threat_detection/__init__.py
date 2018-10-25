@@ -223,27 +223,21 @@ def get_device_information(device_id):
 
 def on_network_capture(packet_list):
     """Called when a network packet list has been captured."""
-    _LOGGER.debug(packet_list)
-    for packet in packet_list:
-        handle_packet(packet)
-    _LOGGER.debug("Done processing packets")
+    from pypacker.layer12.ethernet import Ethernet
+    forward_packets(packet_list, Ethernet, 'ethernet')
 
 
 def on_network_beacon_capture(packet_list):
-    _LOGGER.debug("Got %i beacon packets", len(packet_list))
-    from scapy.all import Dot11Elt, RadioTap
+    from pypacker.layer12.radiotap import Radiotap
+    forward_packets(packet_list, Radiotap, 'beacon')
 
-    on_network_capture(packet_list)
 
-    try:
-        _LOGGER.debug([(p.getlayer(Dot11Elt).info.decode('utf-8'),
-                   p.getlayer(RadioTap).dBm_AntSignal) for p in packet_list])
-    except Exception as e:
-        strange_packets = [p.show(dump=True) for p in packet_list if not p.haslayer(Dot11Elt)]
-        for packet in strange_packets:
-            _LOGGER.info("Got strange beacon packet: %s", packet)
-        if not strange_packets:
-            _LOGGER.info("Got strange beacon packet behaviour but no bad guy")
+def forward_packets(packet_list, wrapper_class, type=''):
+    # Timestamp, buffer
+    _LOGGER.debug("Forwarding %i %s packets" % (len(packet_list), type))
+    for ts, buf in packet_list:
+        handle_packet(wrapper_class(buf))
+    _LOGGER.debug("Done processing packets")
 
 
 def get_gateways():

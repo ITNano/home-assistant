@@ -674,15 +674,16 @@ class PacketCapturer:
             if not self.lock.acquire(blocking=False):
                 return
 
-            from scapy.all import rdpcap, PacketList
             path = dirname(event.src_path)
-            # Ignore directories and empty files
-            all_files = [f for f in os.listdir(path) if (isfile(join(path, f))
-                         and getsize(join(path, f)) > 0)]
-            files = list(filter(lambda f: f.endswith('.pcap'), all_files))
+            # Ignore directories, empty files and the file in progress
+            files = [join(path, f) for f in os.listdir(path) if (
+                      isfile(join(path, f)) and
+                      getsize(join(path, f)) > 0 and
+                      join(path, f) != event.src_path and
+                      f.endswith('.pcap'))]
             # Parse data from pcap format
             _LOGGER.debug("Reading network files")
-            data = [safe_exc(rdpcap, [], join(path, file)) for file in files]
+            data = [pkt for file in files for pkt in read_pcap(file)]
             _LOGGER.debug("Done reading network files")
             # Remove read files so data are only read once
             for file in files:
@@ -690,7 +691,11 @@ class PacketCapturer:
             # Allow new files to be read
             self.lock.release()
             # Notify the user of the found data
-            self.callback(PacketList([pkt for pkts in data for pkt in pkts]))
+            self.callback(data)
+
+        def read_pcap(self, file):
+            from pypacker import ppcap
+            return safe_exc(ppcap.Reader, [], file)
 
 
 def safe_exc(func, default, *args):

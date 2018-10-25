@@ -585,7 +585,7 @@ def get_IDs_from_packet(packet):
     """
     from pypacker.layer12 import ethernet, radiotap, ieee80211
     if isinstance(packet, ethernet.Ethernet):
-        return [packet.src.hex(), packet.dst.hex()]
+        return [eth_addr(packet.src), eth_addr(packet.dst)]
     elif isinstance(packet, radiotap.Radiotap):
         for entry in packet[ieee80211.IEEE80211.Beacon].params:
             if entry.id == 0:

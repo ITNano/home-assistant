@@ -260,41 +260,41 @@ def add_profile_callbacks():
 
 
 def get_eth_profiler():
-    from scapy.all import Ether
+    from pypacker.layer12.ethernet import Ethernet
     def profile_eth(profile, pkt):
         addr = get_eth_address(profile, pkt)
         if not profile.data.get(addr):
             profile.data[addr] = {}
         container = profile.data[addr]
-        container['src'] = pkt.src
-        container['dst'] = pkt.dst
+        container['src'] = eth_addr(pkt.src)
+        container['dst'] = eth_addr(pkt.dst)
         container['count'] = container.get('count', 0) + 1
 
     return {'device_selector': lambda prof: True,
-            'condition': lambda prof, pkt: pkt.haslayer(Ether),
+            'condition': lambda prof, pkt: pkt[Ethernet],
             'profiler_func': profile_eth}
 
 
 def get_ip_profiler():
-    from scapy.all import IP, IPv6
+    from pypacker.layer3 import ip, ip6
     def profile_ip(profile, pkt):
-        eth_addr = get_eth_address(profile, pkt)
-        ip_addr = get_ip_address(profile, pkt)
-        if not profile.data[eth_addr].get(ip_addr):
-            profile.data[eth_addr][ip_addr] = {}
-        container = profile.data[eth_addr][ip_addr]
-        layer = pkt.getlayer(IP) if pkt.haslayer(IP) else pkt.getlayer(IPv6)
-        my_ip = layer.src if pkt.src == profile.get_id() else layer.dst
+        eth_address = get_eth_address(profile, pkt)
+        ip_address = get_ip_address(profile, pkt)
+        if not profile.data[eth_address].get(ip_address):
+            profile.data[eth_address][ip_address] = {}
+        container = profile.data[eth_address][ip_address]
+        layer = pkt[ip.IP] if pkt[ip.IP] else pkt[ip6.IP6]
+        my_ip = ip_addr(layer.src) if eth_addr(pkt.src) == profile.get_id() else ip_addr(layer.dst)
         if my_ip not in profile.data['identifiers']:
             profile.data['identifiers'].append(my_ip)
             if DEVICE_TYPES.get(my_ip):
                 profile.data['device_type'] = DEVICE_TYPES[my_ip]
-        container['src'] = layer.src
-        container['dst'] = layer.dst
+        container['src'] = ip_addr(layer.src)
+        container['dst'] = ip_addr(layer.dst)
         container['count'] = container.get('count', 0) + 1
 
     def condition(profile, pkt):
-        return pkt.haslayer(IP) or pkt.haslayer(IPv6)
+        return pkt[ip.IP] or pkt[ip6.IP6]
 
     return {'device_selector': lambda prof: True,
             'condition': condition,
@@ -302,44 +302,44 @@ def get_ip_profiler():
 
 
 def get_tcp_profiler():
-    from scapy.all import TCP
+    from pypacker.layer4 import tcp
     def profile_tcp(profile, pkt):
-        eth_addr = get_eth_address(profile, pkt)
-        ip_addr = get_ip_address(profile, pkt)
-        tcp_addr = get_tcp_address(profile, pkt)
-        if not profile.data[eth_addr][ip_addr].get(tcp_addr):
-            profile.data[eth_addr][ip_addr][tcp_addr] = {}
-        container = profile.data[eth_addr][ip_addr][tcp_addr]
-        layer = pkt.getlayer(TCP)
+        eth_address = get_eth_address(profile, pkt)
+        ip_address = get_ip_address(profile, pkt)
+        tcp_address = get_tcp_address(profile, pkt)
+        if not profile.data[eth_address][ip_address].get(tcp_address):
+            profile.data[eth_address][ip_address][tcp_address] = {}
+        container = profile.data[eth_address][ip_address][tcp_address]
+        layer = pkt[tcp.TCP]
         container['src'] = layer.sport
         container['dst'] = layer.dport
         container['count'] = container.get('count', 0) + 1
-        container['minsize'] = min(container.get('minsize', 99999), len(layer))
-        container['maxsize'] = max(container.get('maxsize', 0), len(layer))
+        container['minsize'] = min(container.get('minsize', 99999), len(layer.body_bytes))
+        container['maxsize'] = max(container.get('maxsize', 0), len(layer.body_bytes))
 
     return {'device_selector': lambda prof: True,
-            'condition': lambda prof, pkt: pkt.haslayer(TCP),
+            'condition': lambda prof, pkt: pkt[tcp.TCP],
             'profiler_func': profile_tcp}
 
 
 def get_udp_profiler():
-    from scapy.all import UDP
+    from pypacker.layer4 import udp
     def profile_udp(profile, pkt):
-        eth_addr = get_eth_address(profile, pkt)
-        ip_addr = get_ip_address(profile, pkt)
-        udp_addr = get_udp_address(profile, pkt)
-        if not profile.data[eth_addr][ip_addr].get(udp_addr):
-            profile.data[eth_addr][ip_addr][udp_addr] = {}
-        container = profile.data[eth_addr][ip_addr][udp_addr]
-        layer = pkt.getlayer(UDP)
+        eth_address = get_eth_address(profile, pkt)
+        ip_address = get_ip_address(profile, pkt)
+        udp_address = get_udp_address(profile, pkt)
+        if not profile.data[eth_address][ip_address].get(udp_address):
+            profile.data[eth_address][ip_address][udp_address] = {}
+        container = profile.data[eth_address][ip_address][udp_address]
+        layer = pkt[udp.UDP]
         container['src'] = layer.sport
         container['dst'] = layer.dport
         container['count'] = container.get('count', 0) + 1
-        container['minsize'] = min(container.get('minsize', 99999), len(layer))
-        container['maxsize'] = max(container.get('maxsize', 0), len(layer))
+        container['minsize'] = min(container.get('minsize', 99999), len(layer.body_bytes))
+        container['maxsize'] = max(container.get('maxsize', 0), len(layer.body_bytes))
 
     return {'device_selector': lambda prof: True,
-            'condition': lambda prof, pkt: pkt.haslayer(UDP),
+            'condition': lambda prof, pkt: pkt[udp.UDP]
             'profiler_func': profile_udp}
 
 
@@ -347,28 +347,35 @@ def get_address(is_sender, src, dst):
     return dst if is_sender else src
 
 
+def eth_addr(raw):
+    return raw.hex()
+
+
+def ip_addr(raw):
+    return raw.hex()
+
+
 def get_eth_address(profile, pkt):
-    return get_address(profile.get_id() == pkt.src, pkt.src, pkt.dst)
+    return get_address(profile.get_id() == eth_addr(pkt.src), eth_addr(pkt.src), eth_addr(pkt.dst))
 
 
 def get_ip_address(profile, pkt):
-    from scapy.all import IP, IPv6
-    proto = IP if pkt.haslayer(IP) else IPv6
-    layer = pkt.getlayer(proto)
-    return get_address(profile.get_id() == pkt.src, layer.src, layer.dst)
+    from pypacker.layer3 import ip, ip6
+    layer = pkt[ip.IP] if pkt[ip.IP] else pkt[ip6.IP6]
+    return get_address(profile.get_id() == eth_addr(pkt.src), ip_addr(layer.src), ip_addr(layer.dst))
 
 
 def get_tcp_address(profile, pkt):
-    from scapy.all import TCP
-    layer = pkt.getlayer(TCP)
-    port = get_address(profile.get_id() == pkt.src, layer.sport, layer.dport)
+    from pypacker.layer4 import tcp
+    layer = pkt[tcp.TCP]
+    port = get_address(profile.get_id() == eth_addr(pkt.src), layer.sport, layer.dport)
     return "TCP" + str(port)
 
 
 def get_udp_address(profile, pkt):
-    from scapy.all import UDP
-    layer = pkt.getlayer(UDP)
-    port = get_address(profile.get_id() == pkt.src, layer.sport, layer.dport)
+    from pypacker.layer4 import udp
+    layer = pkt[udp.UDP]
+    port = get_address(profile.get_id() == eth_addr(pkt.src), layer.sport, layer.dport)
     return "UDP" + str(port)
 
 
@@ -578,7 +585,7 @@ def get_IDs_from_packet(packet):
     """
     from pypacker.layer12 import ethernet, radiotap, ieee80211
     if isinstance(packet, ethernet.Ethernet):
-        return [packet.src, packet.dst]
+        return [packet.src.hex(), packet.dst.hex()]
     elif isinstance(packet, radiotap.Radiotap):
         for entry in packet[ieee80211.IEEE80211.Beacon].params:
             if entry.id == 0:

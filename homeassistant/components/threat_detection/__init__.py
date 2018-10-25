@@ -26,7 +26,7 @@ DOMAIN = "threat_detection"
 
 ENTITIY_ID_FORMAT = DOMAIN + ".{}"
 
-REQUIREMENTS = ['scapy==2.4.0.dev518', 'watchdog==0.9.0']
+REQUIREMENTS = ['pypacker==4.5', 'watchdog==0.9.0']
 
 # Configuration input
 CONF_PROFILING_TIME = 'profiling_time'

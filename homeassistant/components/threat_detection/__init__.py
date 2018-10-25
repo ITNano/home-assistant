@@ -576,15 +576,13 @@ def get_IDs_from_packet(packet):
 
     NOTE: This is not modular atm.
     """
-    from scapy.all import Ether, Dot11Elt
-    if packet.haslayer(Ether):
+    from pypacker.layer12 import ethernet, radiotap, ieee80211
+    if isinstance(packet, ethernet.Ethernet):
         return [packet.src, packet.dst]
-    elif packet.haslayer(Dot11Elt):
-        while packet.haslayer(Dot11Elt):
-            if packet.getlayer(Dot11Elt).ID == 0:
-                ssid = packet.getlayer(Dot11Elt).info.decode('utf-8')
-                return ["AP_" + ssid]
-            packet = packet.getlayer(Dot11Elt)
+    elif isinstance(packet, radiotap.Radiotap):
+        for entry in packet[ieee80211.IEEE80211.Beacon].params:
+            if entry.id == 0:
+                return ["AP_" + entry.body_bytes.decode('utf-8')
     return []
 
 

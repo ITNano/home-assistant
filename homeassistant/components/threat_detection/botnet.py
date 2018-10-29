@@ -65,13 +65,14 @@ def get_dns_profiler():
     def selector(prof):
         return True
     def condition(prof, pkt):
-        if pkt[dns.DNS]:
+        if pkt[dns.DNS] and prof.get_id() == eth_addr(pkt.dst):
             layer = pkt[dns.DNS]
             if layer.queries and [answer for answer in layer.answers if answer.type in VALID_DNS_TYPES]:
                 domain = layer.queries[0].name.decode('utf-8')
                 data = prof.data.get("dns", {}).get(domain, [])
-                if (prof.get_id() == eth_addr(pkt.dst) and (prof.is_profiling() or data)):
-                    return True
+                return prof.is_profiling() or data
+            else:
+                print(pkt[dns.DNS])
     def profiler(profile, pkt):
         layer = pkt[dns.DNS]
         domain = layer.queries[0].name.decode('utf-8')

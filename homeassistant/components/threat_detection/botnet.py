@@ -81,6 +81,8 @@ def get_dns_profiler():
         print(" --------------- ")
         print(layer)
         print(" --------------- ")
+        for req in layer.queries:
+            print(req)
         for answer in layer.answers:
             print(answer)
         domain = layer.queries[0].name.decode('utf-8')

@@ -78,6 +78,11 @@ def get_dns_profiler():
         layer = pkt[dns.DNS]
         print(" --------------- ")
         print(layer.hexdump())
+        print(" --------------- ")
+        print(layer)
+        print(" --------------- ")
+        for answer in layer.answers:
+            print(layer.answers)
         domain = layer.queries[0].name.decode('utf-8')
         if not profile.data.get("dns"):
             profile.data["dns"] = {}

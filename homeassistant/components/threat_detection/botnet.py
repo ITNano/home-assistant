@@ -72,7 +72,10 @@ def get_dns_profiler():
                 data = prof.data.get("dns", {}).get(domain, [])
                 return prof.is_profiling() or data
     def profiler(profile, pkt):
+        print(pkt.hexdump())
         layer = pkt[dns.DNS]
+        print(" --------------- ")
+        print(layer.hexdump())
         domain = layer.queries[0].name.decode('utf-8')
         if not profile.data.get("dns"):
             profile.data["dns"] = {}

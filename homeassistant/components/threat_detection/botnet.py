@@ -68,11 +68,22 @@ def get_dns_profiler():
         if pkt[dns.DNS] and prof.get_id() == eth_addr(pkt.dst):
             layer = pkt[dns.DNS]
             if layer.queries and layer.answers: # and [answer for answer in layer.answers if answer.type in VALID_DNS_TYPES]:
-                domain = layer.queries[0].name.decode('utf-8')
+                domain = get_name(layer.queries[0].name)
                 data = prof.data.get("dns", {}).get(domain, [])
                 return prof.is_profiling() or data
+    def get_name(raw_bytes):
+        res = ""
+        count = 0
+        for b in raw_bytes:
+            if count == 0:
+                count = b
+                res += "."
+            else:
+                res += chr(b)
+                count -= 1
+        return res
     def profiler(profile, pkt):
-        domain = layer.queries[0].name.decode('utf-8')
+        domain = get_name(layer.queries[0].name)
         if not profile.data.get("dns"):
             profile.data["dns"] = {}
         if not profile.data["dns"].get(domain):

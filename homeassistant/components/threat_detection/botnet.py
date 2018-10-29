@@ -64,13 +64,6 @@ def get_dns_profiler():
     from pypacker.layer567 import dns
     def selector(prof):
         return True
-    def condition(prof, pkt):
-        if pkt[dns.DNS] and prof.get_id() == eth_addr(pkt.dst):
-            layer = pkt[dns.DNS]
-            if layer.queries and layer.answers: # and [answer for answer in layer.answers if answer.type in VALID_DNS_TYPES]:
-                domain = get_name(layer.queries[0].name)
-                data = prof.data.get("dns", {}).get(domain, [])
-                return prof.is_profiling() or data
     def get_name(raw_bytes):
         res = ""
         count = 0
@@ -82,6 +75,13 @@ def get_dns_profiler():
                 res += chr(b)
                 count -= 1
         return res
+    def condition(prof, pkt):
+        if pkt[dns.DNS] and prof.get_id() == eth_addr(pkt.dst):
+            layer = pkt[dns.DNS]
+            if layer.queries and layer.answers: # and [answer for answer in layer.answers if answer.type in VALID_DNS_TYPES]:
+                domain = get_name(layer.queries[0].name)
+                data = prof.data.get("dns", {}).get(domain, [])
+                return prof.is_profiling() or data
     def profiler(profile, pkt):
         domain = get_name(layer.queries[0].name)
         if not profile.data.get("dns"):

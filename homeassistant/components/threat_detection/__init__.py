@@ -724,7 +724,11 @@ class PacketCapturer:
 
         def read_pcap(self, file):
             from pypacker import ppcap
-            return safe_exc(ppcap.Reader, [], file)
+            try:
+                return [pkt for pkt in ppcap.Reader(filename=file)]
+            except Exception as e:
+                _LOGGER.warning("Could not parse packets correctly")
+                return []
 
 
 def safe_exc(func, default, *args):

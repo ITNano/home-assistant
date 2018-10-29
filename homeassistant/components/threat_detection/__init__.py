@@ -635,8 +635,11 @@ def save_profiles(filename):
             print(Profile.tree_to_string(id, profile.data))
         if id is None:
             id = '__None__'
-        with open('/home/scionova/.homeassistant/profile_debug_'+id.replace(':', '.')+'.json', 'w') as jsonout:
-            json.dump(profile.data, jsonout)
+        try:
+            with open('/home/scionova/.homeassistant/profile_debug_'+id.replace(':', '.')+'.json', 'w') as jsonout:
+                json.dump(profile.data, jsonout)
+        except Exception as e:
+            _LOGGER.exception("Could not write JSON file", exc_info=1)
 
 
 def load_profiles(filename):

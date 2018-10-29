@@ -72,6 +72,8 @@ def get_dns_profiler():
                 data = prof.data.get("dns", {}).get(domain, [])
                 return prof.is_profiling() or data
     def profiler(profile, pkt):
+        print(pkt.bin(update_auto_fields=False))
+        print(" --------------- ")
         print(pkt.hexdump())
         layer = pkt[dns.DNS]
         print(" --------------- ")

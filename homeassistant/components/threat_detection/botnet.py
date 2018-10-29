@@ -15,7 +15,7 @@ from homeassistant.components.threat_detection import (Profile,
                                                        PLATFORM_SCHEMA,
                                                        DOMAIN)
 
-DNS_RECORD_A = 12848
+DNS_RECORD_A = 1
 DNS_RECORD_AAAA = -1
 VALID_DNS_TYPES = [DNS_RECORD_A, DNS_RECORD_AAAA]
 
@@ -67,15 +67,10 @@ def get_dns_profiler():
     def condition(prof, pkt):
         if pkt[dns.DNS] and prof.get_id() == eth_addr(pkt.dst):
             layer = pkt[dns.DNS]
-            if layer.queries and [answer for answer in layer.answers if answer.type in VALID_DNS_TYPES]:
+            if layer.queries and layer.answers: # and [answer for answer in layer.answers if answer.type in VALID_DNS_TYPES]:
                 domain = layer.queries[0].name.decode('utf-8')
                 data = prof.data.get("dns", {}).get(domain, [])
                 return prof.is_profiling() or data
-            else:
-                if layer.answers:
-                    print(layer)
-                    for answer in layer.answers:
-                        print(answer)
     def profiler(profile, pkt):
         layer = pkt[dns.DNS]
         domain = layer.queries[0].name.decode('utf-8')

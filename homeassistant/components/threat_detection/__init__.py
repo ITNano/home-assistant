@@ -65,8 +65,8 @@ def async_setup(hass, config=None):
 
     # Set up network properties
     for device in get_gateways():
-        ignore_device(eth_addr(device))
-    ignore_device(eth_addr('ff:ff:ff:ff:ff:ff'))
+        ignore_device(device)
+    ignore_device('ffffffffffff')
 
     # Start capturing packets from network
     global CAPTURER
@@ -244,7 +244,7 @@ def get_gateways():
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     (output, err) = proc.communicate()
     if not err:
-        return str(output.decode()).splitlines()
+        return [gw.replace(':', '') for gw in str(output.decode()).splitlines()]
 
 
 # ------------------------ PROFILERS and ANALYSERS ------------------------- #

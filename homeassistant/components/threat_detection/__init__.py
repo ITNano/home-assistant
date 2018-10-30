@@ -65,8 +65,8 @@ def async_setup(hass, config=None):
 
     # Set up network properties
     for device in get_gateways():
-        ignore_device(device)
-    ignore_device('ff:ff:ff:ff:ff:ff')
+        ignore_device(eth_addr(device))
+    ignore_device(eth_addr('ff:ff:ff:ff:ff:ff'))
 
     # Start capturing packets from network
     global CAPTURER

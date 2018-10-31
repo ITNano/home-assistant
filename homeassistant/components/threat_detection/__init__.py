@@ -88,6 +88,7 @@ def async_setup(hass, config=None):
             data = json.load(infile)
         profile = get_profile('AP_' + data.get('ap', 'ASUS'))
         profile.data['rssi'] = data['rssi']
+        profile.start_profile_end_countdown(30)
 
     def store_profiles(event):
         """Store profiling data in home assistant conf dir."""
@@ -446,6 +447,7 @@ class Profile:
 
     def on_profiling_end(self):
         """Runs the on_profiling_end function of all assigned profilers."""
+        _LOGGER.debug("Running on_profiling_end for %s" % (self.get_id()))
         for profiler in self._profilers:
             if profiler.get('on_profiling_end'):
                 profiler['on_profiling_end'](self)

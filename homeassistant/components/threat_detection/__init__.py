@@ -30,6 +30,7 @@ REQUIREMENTS = ['pypacker==4.5', 'watchdog==0.9.0']
 
 # Configuration input
 CONF_PROFILING_TIME = 'profiling_time'
+CONF_DEBUG_EVILTWIN = 'debug_eviltwin'
 DEF_PROFILING_TIME = 86400
 # Here we need to add everything that is required from the conf-file if we
 # need some input from the user.
@@ -37,6 +38,7 @@ PLATFORM_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Optional(CONF_PROFILING_TIME,
                      default=DEF_PROFILING_TIME): cv.positive_int,
+        vol.Optional(CONF_DEBUG_EVILTWIN, default=None) : cv.string,
     })
 }, extra=vol.ALLOW_EXTRA)
 
@@ -79,6 +81,13 @@ def async_setup(hass, config=None):
     # Setup profiling
     add_profile_callbacks()
     load_profiles(join(hass.config.config_dir, STORAGE_NAME))
+
+    debug_eviltwin = config[DOMAIN][0].get(CONF_DEBUG_EVILTWIN, None)
+    if debug_eviltwin:
+        with open(debug_eviltwin, encoding='utf-8') as infile:
+            data = json.load(infile)
+        profile = get_profile('AP_' + data.get('ap', 'ASUS'))
+        profile.data['rssi'] = data['rssi']
 
     def store_profiles(event):
         """Store profiling data in home assistant conf dir."""

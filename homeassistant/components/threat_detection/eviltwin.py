@@ -86,6 +86,8 @@ def analyse_mix(profile, packet):
     if not current_rssi:
         _LOGGER.warning("Found RadioTap header without signal strength")
         return
+    else:
+        profile.data['analyser_rssi'][current_rssi] += 1
 
     # Do analyse
     ssid = profile.get_id().split("_")[1]
@@ -144,6 +146,7 @@ def profiler(profile, packet):
     rssi = profile.data.get("rssi")
     if not rssi:
         profile.data['rssi'] = [0]*150
+        profile.data['analyser_rssi'] = [0]*150
 
     current_rssi = get_signal_strength(packet)
     if current_rssi:

@@ -444,7 +444,7 @@ class Profile:
 
     def start_profile_end_countdown(self, time_left):
         """Starts a timer which calls on_profiling_end when profiling ends."""
-        if self._timer and self._timer.is_alive():
+        if hasattr(self, '_timer') and self._timer.is_alive():
             self._timer.cancel()
         self._timer = Timer(time_left, self.on_profiling_end)
         self._timer.start()

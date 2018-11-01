@@ -88,7 +88,7 @@ def async_setup(hass, config=None):
             data = json.load(infile)
         profile = get_profile('AP_' + data.get('ap', 'ASUS'))
         profile.data = data
-        profile.data['analyser_rssi'] = []
+        profile.data['analyser_rssi'] = [0]*150
         profile._profiling_end = (datetime.now() - timedelta(seconds=3))
 
     def store_profiles(event):

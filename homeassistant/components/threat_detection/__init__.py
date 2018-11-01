@@ -87,10 +87,9 @@ def async_setup(hass, config=None):
         with open(debug_eviltwin, encoding='utf-8') as infile:
             data = json.load(infile)
         profile = get_profile('AP_' + data.get('ap', 'ASUS'))
-        profile.data['rssi'] = data['rssi']
-        profile.start_profile_end_countdown(30)
-        profile._profiling_end = (datetime.now() -
-                                  timedelta(seconds=3))
+        profile.data = data
+        profile.data['analyser_rssi'] = []
+        profile._profiling_end = (datetime.now() - timedelta(seconds=3))
 
     def store_profiles(event):
         """Store profiling data in home assistant conf dir."""

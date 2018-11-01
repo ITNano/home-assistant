@@ -89,6 +89,8 @@ def async_setup(hass, config=None):
         profile = get_profile('AP_' + data.get('ap', 'ASUS'))
         profile.data['rssi'] = data['rssi']
         profile.start_profile_end_countdown(30)
+        profile._profiling_end = (datetime.now() -
+                                  timedelta(seconds=3))
 
     def store_profiles(event):
         """Store profiling data in home assistant conf dir."""
@@ -442,6 +444,8 @@ class Profile:
 
     def start_profile_end_countdown(self, time_left):
         """Starts a timer which calls on_profiling_end when profiling ends."""
+        if self._timer and self._timer.is_alive():
+            self._timer.cancel()
         self._timer = Timer(time_left, self.on_profiling_end)
         self._timer.start()
 
